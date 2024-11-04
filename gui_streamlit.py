@@ -1,5 +1,6 @@
 import numpy as np
 from streamlit_extras.stylable_container import stylable_container
+import os
 import streamlit as st
 
 from gui_utils import *
@@ -137,11 +138,16 @@ def solve_sudoku(column) -> None:
     with column:
         with st.spinner("Solving..."):
             save_sudoku_puzzle(st.session_state.sudoku, file_path="sudoku_tmp.txt")
-            # TODO: launch the solver and load the solution
-            solution = load_sudoku_board(file_path="sudoku_solution.txt")
-            set_session_value("solutions", [solution])
+            execution = call_c_file("human_solver")
 
-        st.success("Solution loaded successfully.")
+        if execution:
+            solution = load_sudoku_board(file_path="Solutions/solution1.txt")
+            set_session_value("solutions", [solution])
+            st.success("Sudoku loaded successfully.")
+        else:
+            st.error("Error solving the sudoku puzzle.")
+        solution = load_sudoku_board(file_path="Solutions/solution1.txt")
+        set_session_value("solutions", [solution])
 
 
 ### ---------------------------------------------------------------------------------------------------- ###
@@ -161,7 +167,7 @@ def generate_sudoku_block(block_idx: int, n_rows: int=3) -> None:
     _, c, _ = st.columns((0.5, 1, 0.5))
     grid = c.columns((0.07, 0.07, 0.07, 0.035, 0.07, 0.07, 0.07, 0.035, 0.07, 0.07, 0.07, 0.01))
 
-    mask = get_freeze_mask(st.session_state.sudoku) if st.session_state.freeze_configuration else (
+    mask = get_freeze_mask() if st.session_state.freeze_configuration else (
         np.ones((9, 9), dtype=bool))
 
     for row in range(3*block_idx, 3*block_idx+n_rows):

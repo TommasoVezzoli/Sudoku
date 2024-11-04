@@ -1,5 +1,18 @@
 import numpy as np
-import os
+import subprocess
+
+
+def call_c_file(file_name: str) -> bool:
+    compile_process = subprocess.run(["gcc", f"{file_name}.c", "-o", file_name])
+    if compile_process.returncode != 0:
+        return False
+    else:
+        run_process = subprocess.run([f"./{file_name}"], capture_output=True)
+        # return run_process.stdout.decode("utf-8")
+        if run_process.returncode != 0:
+            return False
+        else:
+            return True
 
 
 def check_valid_sudoku(sudoku: np.ndarray) -> bool:
