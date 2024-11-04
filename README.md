@@ -10,7 +10,7 @@ On the platform, it is possible to ...
 - [x] Design the Sudoku interactive grid
 - [x] Upload and download Sudoku puzzles into text files
 - [x] Show only valid inputs
-- [ ] Freeze the configuration for manual solving
+- [x] Freeze the configuration for manual solving
 - [ ] Call the solver
 - [ ] Handle multiple possible solutions
 - [ ] Hint 1: Unveil a chosen cell
