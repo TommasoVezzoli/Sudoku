@@ -17,4 +17,7 @@ On the platform, it is possible to ...
 
 ##### Development features:
 - [x] Solve a Sudoku puzzle with the backtracking algorithm
+- [x] Solve a Sudoku puzzle using human resolution strategies
+- [ ] Correct output procedure in human solver
 - [ ] Return multiple possible solutions
+- [ ] Solve a non-9x9 Sudoku with backtracking and with human solver
