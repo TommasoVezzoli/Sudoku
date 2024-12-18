@@ -1,18 +1,15 @@
 import numpy as np
+import os
 import subprocess
 
 
-def call_c_file(file_name: str) -> bool:
-    compile_process = subprocess.run(["gcc", f"{file_name}.c", "-o", file_name])
-    if compile_process.returncode != 0:
+def call_c_file(file_name: str, input_file: str) -> bool:
+    run_process = subprocess.run([file_name, input_file], capture_output=True, text=True)
+    # return run_process.stdout.decode("utf-8")
+    if run_process.returncode != 0:
         return False
     else:
-        run_process = subprocess.run([f"./{file_name}"], capture_output=True)
-        # return run_process.stdout.decode("utf-8")
-        if run_process.returncode != 0:
-            return False
-        else:
-            return True
+        return True
 
 
 def check_valid_sudoku(sudoku: np.ndarray) -> bool:
@@ -123,7 +120,7 @@ def list_possible_numbers(sudoku: np.ndarray, row: int, col: int, valid_inputs_o
     if valid_inputs_only:
         possible = set(range(1, 10))
 
-        # remove numbers in the same row, column, and 3x3 block
+        # Remove numbers in the same row, column, and 3x3 block
         possible -= set(sudoku[row])
         possible -= set(sudoku[:, col])
         possible -= set(
@@ -135,7 +132,23 @@ def list_possible_numbers(sudoku: np.ndarray, row: int, col: int, valid_inputs_o
     return list(possible)
 
 
-def load_sudoku_board(file_path) -> None:
+def load_solutions(path: str) -> list:
+    """
+    Load all the solutions from folder to the session state.
+
+    :param path: path to the folder
+    :return: list of solutions
+    """
+
+    solutions = []
+    for file_name in os.listdir(path):
+        file_path = os.path.join(path, file_name)
+        solutions.append(load_sudoku_board(file_path=file_path))
+
+    return solutions
+
+
+def load_sudoku_board(file_path) -> np.ndarray:
     """
     Load the sudoku puzzle from a text file, check the correctness, and parse it.
 
@@ -188,3 +201,34 @@ def save_sudoku_puzzle(sudoku: np.ndarray, file_path: str) -> None:
     with open(file_path, "w") as f:
         for row in sudoku:
             f.write(" ".join(map(str, row)) + "\n")
+
+
+def get_hint_mask(sudoku: np.ndarray, solutions: list) -> tuple:
+    """
+    Check whether the inputs are correct or not.
+    Place in one mask the cells that are correct in the closest solution,
+    and in the other mask the cells that are correct in the others.
+    This is a hint for the user.
+    
+    :param sudoku: sudoku puzzle
+    :param solutions: list of solutions
+    :return: None
+    """
+
+    n_solutions = len(solutions)
+    matches = [0 for _ in range(n_solutions)]
+    for l in range(n_solutions):
+        for i in range(9):
+            for j in range(9):
+                if sudoku[i, j] == solutions[l][i, j]:
+                    matches[l] += 1
+    
+    ref = matches.index(max(matches))
+    mask1 = np.equal(sudoku, solutions[ref])
+    mask2 = (
+        np.logical_or.reduce([np.equal(sudoku, solutions[l]) for l in range(n_solutions) if l != ref])
+        if n_solutions > 1 else np.zeros(sudoku.shape, dtype=bool)
+    )
+    mask2[np.equal(mask1, mask2)] = False
+
+    return mask1, mask2

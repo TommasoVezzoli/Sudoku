@@ -16,9 +16,12 @@ from gui_utils import *
 if "init" not in st.session_state:
     st.session_state.init = True
     st.session_state.sudoku = np.zeros((9, 9), dtype=int)
+    st.session_state.freezed_sudoku = np.zeros((9, 9), dtype=bool)
     st.session_state.freeze_configuration = False
+    st.session_state.highlight_correct_cells = False
     st.session_state.valid_inputs_only = False
     st.session_state.solutions = []
+    st.session_state.sol_idx = 0
 
 
 ### ---------------------------------------------------------------------------------------------------- ###
@@ -42,16 +45,15 @@ def check_solution(column) -> None:
             st.warning("Sudoku is incomplete.")
 
 
-@st.cache_data
-def get_freeze_mask() -> None:
+def get_freeze_mask() -> np.ndarray:
     """
     Produce a mask to freeze the configuration of the sudoku puzzle.
     This enables the user to solve the puzzle autonomously without messing up the initial configuration.
 
-    :return: None
+    :return: boolean mask
     """
 
-    return st.session_state.sudoku == 0
+    set_session_value("freezed_sudoku", st.session_state.sudoku != 0 if st.session_state.freeze_configuration else np.zeros((9, 9), dtype=bool))
 
 
 def handle_file_upload(column) -> None:
@@ -75,7 +77,6 @@ def handle_file_upload(column) -> None:
         with column:
             if sudoku is not None:
                 set_session_value("sudoku", sudoku)
-                set_session_value("freeze_configuration", True)
                 st.success("File loaded correctly.")
             else:
                 st.error("File is not formatted correctly.")
@@ -130,24 +131,24 @@ def solve_sudoku(column) -> None:
     :return: None
     """
 
-    # check if the board is full
+    # Check if the board is full
     if is_full(st.session_state.sudoku):
         return None
 
-    # save the sudoku puzzle to a text file and launch the solver
+    # Save the sudoku puzzle to a text file and launch the solver
     with column:
         with st.spinner("Solving..."):
+
             save_sudoku_puzzle(st.session_state.sudoku, file_path="sudoku_tmp.txt")
-            execution = call_c_file("human_solver")
+            execution = call_c_file(file_name="run_backtrack.exe", input_file="sudoku_tmp.txt")
 
         if execution:
-            solution = load_sudoku_board(file_path="Solutions/solution1.txt")
-            set_session_value("solutions", [solution])
-            st.success("Sudoku loaded successfully.")
+            solutions = load_solutions(path="Solutions")
+            set_session_value("sol_idx", 0)
+            set_session_value("solutions", solutions)
+            st.success("Solution(s) loaded successfully.")
         else:
             st.error("Error solving the sudoku puzzle.")
-        solution = load_sudoku_board(file_path="Solutions/solution1.txt")
-        set_session_value("solutions", [solution])
 
 
 ### ---------------------------------------------------------------------------------------------------- ###
@@ -167,8 +168,22 @@ def generate_sudoku_block(block_idx: int, n_rows: int=3) -> None:
     _, c, _ = st.columns((0.5, 1, 0.5))
     grid = c.columns((0.07, 0.07, 0.07, 0.035, 0.07, 0.07, 0.07, 0.035, 0.07, 0.07, 0.07, 0.01))
 
-    mask = get_freeze_mask() if st.session_state.freeze_configuration else (
-        np.ones((9, 9), dtype=bool))
+    # mask = get_freeze_mask() if st.session_state.freeze_configuration else (
+    #     np.zeros((9, 9), dtype=bool))
+    
+    hint1, hint2 = (
+        get_hint_mask(st.session_state.sudoku, st.session_state.solutions)
+        if st.session_state.solutions and st.session_state.highlight_correct_cells else (
+            np.zeros((9, 9), dtype=bool),
+            np.zeros((9, 9), dtype=bool)
+        )
+    )
+
+    # The problem is that the mask works in the opposite way: mask 1 indicates white background, mask 0 indicates grey
+    # print("ciao", mask, mask.shape, hint1, hint1.shape)
+    # hint1[np.equal(mask, hint1)] = False
+    # hint2[np.equal(mask, hint2)] = False
+    # print(hint2)
 
     for row in range(3*block_idx, 3*block_idx+n_rows):
         for col in range(11):
@@ -176,10 +191,25 @@ def generate_sudoku_block(block_idx: int, n_rows: int=3) -> None:
                 if col in (3, 7):
                     continue
 
-                num = st.session_state.sudoku[row, map_board_column(col)]
+                map_col = map_board_column(col)
+                num = st.session_state.sudoku[row, map_col]
                 text = str(num) if num != 0 else "_"
 
-                background_color = "#ffffff" if mask[row, map_board_column(col)] else "#f0f0f0"
+                if st.session_state.freeze_configuration and st.session_state.freezed_sudoku[row, map_col]:
+                    if hint1[row, map_col]:
+                        background_color = "#99dd99"
+                    elif hint2[row, map_col]:
+                        background_color = "#ffd700"
+                    else:
+                        background_color = "#f0f0f0"
+                elif hint1[row, map_col]:
+                    background_color = "#00ff00"
+                elif hint2[row, map_col]:
+                    background_color = "#ffff00"
+                else:
+                    background_color = "#ffffff" 
+                
+
                 with stylable_container(
                         key=f"sudoku_{row}{col}",
                         css_styles=f"""
@@ -196,13 +226,14 @@ def generate_sudoku_block(block_idx: int, n_rows: int=3) -> None:
                         label=text,
                         on_click=input_number,
                         args=(row, col),
-                        disabled=not mask[row, map_board_column(col)]
+                        disabled=st.session_state.freeze_configuration and st.session_state.freezed_sudoku[row, map_board_column(col)]
                     )
 
 
 for block_idx in range(3):
     generate_sudoku_block(block_idx=block_idx)
 
+st.write(st.session_state.freezed_sudoku)
 st.write("---")
 
 
@@ -252,25 +283,68 @@ with cols[0]:
         )
 
 if st.session_state.solutions:
-    with stylable_container(
-        key="solution_popup",
-        css_styles="""
-            popover {
-                background-color: white;
-                border: 2px solid black;
-                border-radius: 10px;
-                padding: 20px;
-                box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
-                width: 100px;
-                max-width: 90%;
-            }
-        """
-    ):
-        with st.popover("Show solution"):
-            st.html(generate_sudoku_html(st.session_state.solutions[0], st.session_state.sudoku))
+    # with stylable_container(
+    #     key="solution_popup",
+    #     css_styles="""
+    #         popover {
+    #             background-color: white;
+    #             border: 2px solid black;
+    #             border-radius: 10px;
+    #             padding: 20px;
+    #             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    #             width: 100px;
+    #             max-width: 90%;
+    #         }
+    #     """
+    # ):
+    with st.popover("Show solution"):
+
+
+        with stylable_container(
+            key="solution_popup",
+            css_styles="""
+                button {
+                    border: none;
+                }
+            """
+        ):
+            cols = st.columns((0.5, 0.2, 0.1, 0.2), vertical_alignment="center")
+
+            solutions = st.session_state.solutions
+            sol_idx = st.session_state.sol_idx
+            with cols[0]:
+                st.markdown(f"Solution {sol_idx+1} of {len(solutions)}")
+            with cols[1]:
+                st.button(
+                    label="⬅️",
+                    on_click=set_session_value,
+                    args=("sol_idx", sol_idx-1),
+                    disabled=(sol_idx == 0)
+                )
+            with cols[2]:
+                st.button(
+                    label="➡️",
+                    on_click=set_session_value,
+                    args=("sol_idx", sol_idx+1),
+                    disabled=(sol_idx == len(solutions)-1)
+                )
+        st.html(generate_sudoku_html(solutions[sol_idx], st.session_state.sudoku))
+        with open(f"Solutions/solution{sol_idx+1}.txt") as file:
+            st.download_button(
+                label="Download solution",
+                data=file,
+                file_name="solution.txt"
+            )
 
 st.checkbox(
     label="Freeze current configuration",
     key="freeze_configuration",
     value=st.session_state.freeze_configuration,
+    on_change=get_freeze_mask
+)
+
+st.checkbox(
+    label="Highlight correct cells",
+    key="highlight_correct_cells",
+    value=st.session_state.highlight_correct_cells
 )

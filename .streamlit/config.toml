@@ -1,0 +1,5 @@
+[client]
+showErrorDetails = false
+
+[global]
+showWarningOnDirectExecution = false
