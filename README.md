@@ -56,3 +56,12 @@ The paper goes over some methods (exchanging digits, bands, stacks, ...) for cre
 #### Common findings
 - Digit exchanging consists in swapping all occurrences of a digit with another one (e.g. swap all 9s with 2s and all 2s with 9s). This does impact on the uniqueness of the solution.
 - Minimal amount of hints for a unique solution: 17
+
+
+### Updates
+- No level 5 difficulty, only 4 levels
+- Adhere to sudoku website for the difficulty levels
+- Add "medium" techniques to human solver
+- Relax bounds on minimum number of cells (24-38, 29-33, 34-38, 39-45)
+- Just random digging sequence? Other possible sequences?
+- Evaluate generated puzzle: (0.5 cell bounds, 0.3 cells on rows/cols, 0.2 techniques) possible 0.1 for search iterations. After generation, if a puzzle is evaluated of the desired difficulty, it is kept, otherwise it is discarded.
