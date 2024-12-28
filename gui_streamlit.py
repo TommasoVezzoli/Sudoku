@@ -2,6 +2,7 @@ import numpy as np
 from streamlit_extras.stylable_container import stylable_container
 import os
 import streamlit as st
+import time
 
 from gui_utils import *
 
@@ -16,6 +17,7 @@ from gui_utils import *
 if "init" not in st.session_state:
     st.session_state.init = True
     st.session_state.sudoku = np.zeros((9, 9), dtype=int)
+    st.session_state.generated_sudoku = np.zeros((9, 9), dtype=int)
     st.session_state.freezed_sudoku = np.zeros((9, 9), dtype=bool)
     st.session_state.freeze_configuration = False
     st.session_state.highlight_correct_cells = False
@@ -149,6 +151,30 @@ def solve_sudoku(column) -> None:
             st.success("Solution(s) loaded successfully.")
         else:
             st.error("Error solving the sudoku puzzle.")
+
+
+def generate_sudoku(column) -> None:
+    """
+    Generate a new sudoku puzzle with the desired level of difficulty.
+
+    :param column: column to display the process
+    :return: None
+    """
+
+    with column:
+        if st.session_state.difficulty_level is None:
+            st.error("Please select a difficulty level.")
+            return None
+
+        with st.spinner("Generating..."):
+            time.sleep(1)
+        #     execution = call_c_file(file_name="run_generator.exe", input_file="4")
+        #
+        # if execution:
+        #     sudoku_gen = load_sudoku_board(file_path="sudoku_gen.txt")
+        #     set_session_value("generated_sudoku", sudoku_gen)
+        #     st.success("Sudoku generated successfully.")
+        set_session_value("generated_sudoku", load_sudoku_board(file_path="sudoku_solution.txt"))
 
 
 ### ---------------------------------------------------------------------------------------------------- ###
@@ -348,3 +374,51 @@ st.checkbox(
     key="highlight_correct_cells",
     value=st.session_state.highlight_correct_cells
 )
+
+
+st.write("---")
+
+
+st.markdown(
+    """
+    Generator
+    """
+)
+
+cols = st.columns((0.2, 0.2, 0.6), vertical_alignment="bottom")
+sub_col = st.columns((1))
+
+with cols[0]:
+    st.number_input(
+        label="Enter desired level",
+        min_value=1,
+        max_value=4,
+        key="difficulty_level"
+    )
+
+with cols[1]:
+    st.button(
+        label="Generate",
+        on_click=generate_sudoku,
+        args=(sub_col[0],)
+    )
+
+if np.any(st.session_state.generated_sudoku):
+    st.html(generate_sudoku_html(st.session_state.generated_sudoku))
+
+    cols = st.columns((0.1, 0.77))
+    with cols[0]:
+        st.button(
+            label="Import",
+            on_click=set_session_value,
+            args=("sudoku", st.session_state.generated_sudoku)
+        )
+    with cols[1]:
+        # TODO: replace the file path with the correct one
+        #  with open(f"sudoku_gen.txt") as file:
+        with open(f"sudoku_solution.txt") as file:
+            st.download_button(
+                label="Download",
+                data=file,
+                file_name="generated.txt"
+            )
