@@ -1,11 +1,43 @@
-import numpy as np
-import os
-import subprocess
+import  numpy as np
+from    streamlit_extras.stylable_container import stylable_container
+import  streamlit as st
+import  os
+import  subprocess
 
 
-def call_c_file(file_name: str, input_file: str) -> bool:
+def check_solution(column) -> None:
+    """
+    Check if the current sudoku puzzle is a completed and the solution is valid.
+
+    :param column: column to display the result
+    :return: boolean
+    """
+
+    sudoku = st.session_state.sudoku
+    with column:
+        with stylable_container(
+                key="results",
+                css_styles="""
+                .stAlert{
+                    text-align: center
+                }"""
+        ):
+            if is_full(sudoku):
+                st.success("Sudoku is completed and valid.") if check_valid_sudoku(sudoku) else(
+                    st.error("Sudoku is invalid."))
+            else:
+                st.warning("Sudoku is incomplete.")
+
+
+def call_exe(file_name: str, input_file: str) -> bool:
+    """
+    Call an executable receiving an input file.
+
+    :param file_name:
+    :param input_file:
+    :return:
+    """
     run_process = subprocess.run([file_name, input_file], capture_output=True, text=True)
-    # return run_process.stdout.decode("utf-8")
     if run_process.returncode != 0:
         return False
     else:
@@ -87,7 +119,8 @@ def generate_sudoku_html(sudoku: np.ndarray, comparison :np.ndarray=None) -> Non
             border_style = "border-bottom: 3px solid black;" if (i + 1) % 3 == 0 else ""
             border_style += "border-right: 3px solid black;" if (j + 1) % 3 == 0 else ""
 
-            table_body += f"<td style='{cell_color} {border_style}'>" + str(sudoku[i, j]) + "</td>"
+            str_num = str(sudoku[i, j]) if sudoku[i, j] != 0 else " "
+            table_body += f"<td style='{cell_color} {border_style}'>" + str_num + "</td>"
         table_body += "</tr>"
 
     html = "<center>" + table_header + table_body + table_footer + "</center>"
@@ -105,7 +138,7 @@ def is_full(sudoku: np.ndarray) -> bool:
     return not np.any(sudoku == 0)
 
 
-def list_possible_numbers(sudoku: np.ndarray, row: int, col: int, valid_inputs_only: bool) -> list:
+def list_possible_numbers(sudoku: np.ndarray, row: int, col: int, hide_invalid: bool) -> list:
     """
     List the possible numbers for a given position in the sudoku puzzle.
     If requested, only the valid numbers are returned.
@@ -113,14 +146,13 @@ def list_possible_numbers(sudoku: np.ndarray, row: int, col: int, valid_inputs_o
     :param sudoku: sudoku puzzle
     :param row: cell row
     :param col: cell column
-    :param valid_inputs_only: whether to return just the valid numbers or all of them
+    :param hide_invalid: whether to return just the valid numbers or all of them
     :return: list of possible numbers
     """
 
-    if valid_inputs_only:
+    if hide_invalid:
         possible = set(range(1, 10))
 
-        # Remove numbers in the same row, column, and 3x3 block
         possible -= set(sudoku[row])
         possible -= set(sudoku[:, col])
         possible -= set(
@@ -203,7 +235,7 @@ def save_sudoku_puzzle(sudoku: np.ndarray, file_path: str) -> None:
             f.write(" ".join(map(str, row)) + "\n")
 
 
-def get_hint_mask(sudoku: np.ndarray, solutions: list) -> tuple:
+def get_hint_masks(sudoku: np.ndarray, solutions: list) -> tuple:
     """
     Check whether the inputs are correct or not.
     Place in one mask the cells that are correct in the closest solution,
@@ -212,7 +244,7 @@ def get_hint_mask(sudoku: np.ndarray, solutions: list) -> tuple:
     
     :param sudoku: sudoku puzzle
     :param solutions: list of solutions
-    :return: None
+    :return:
     """
 
     n_solutions = len(solutions)

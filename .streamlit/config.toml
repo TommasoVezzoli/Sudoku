@@ -1,5 +1,6 @@
 [client]
-showErrorDetails = false
+showErrorDetails = "none"
 
 [global]
+disableWidgetStateDuplicationWarning = false
 showWarningOnDirectExecution = false
