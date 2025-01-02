@@ -1,5 +1,6 @@
 import  numpy as np
 from    gui_utils import *
+import  os
 from    streamlit_extras.stylable_container import stylable_container
 import  streamlit as st
 
@@ -24,24 +25,6 @@ if "init" not in st.session_state:
 ### --- HELPER FUNCTIONS --- ###
 
 
-
-
-
-def set_freeze_mask() -> None:
-    """
-    Produce a mask to freeze the configuration of the sudoku puzzle.
-    This enables the user to solve the puzzle autonomously without messing up the initial configuration.
-
-    :return: None
-    """
-
-    set_session_value(
-        key="sudoku_frz",
-        value=st.session_state.sudoku != 0 if st.session_state.freeze_config else(
-            np.zeros((9, 9), dtype=bool))
-    )
-
-
 def handle_file_upload(column) -> None:
     """
     Handle the upload of a sudoku puzzle from a text file through the file uploader.
@@ -51,7 +34,6 @@ def handle_file_upload(column) -> None:
     """
 
     file = st.session_state.uploaded_file
-
     if file:
         with column:
             with stylable_container(
@@ -70,13 +52,39 @@ def handle_file_upload(column) -> None:
 
                     sudoku = load_sudoku_board(file_path=file_path)
                     if sudoku is not None:
+                        set_session_value(key="solutions", value=[])
                         set_session_value(key="sudoku", value=sudoku)
+                        set_session_value(key="freeze_config", value=True)
+                        set_freeze_mask()
                         st.success("File loaded correctly.")
                     else:
                         st.error("File is malformed.")
                 except:
                     st.error("File is malformed.")
 
+
+def check_solution(column) -> None:
+    """
+    Check if the current sudoku puzzle is a completed and the solution is valid.
+
+    :param column: column to display the result
+    :return: boolean
+    """
+
+    sudoku = st.session_state.sudoku
+    with column:
+        with stylable_container(
+                key="results",
+                css_styles="""
+                .stAlert{
+                    text-align: center
+                }"""
+        ):
+            if is_full(sudoku):
+                st.success("The sudoku is complete and valid.") if check_valid_sudoku(sudoku) else(
+                    st.error("The sudoku is invalid."))
+            else:
+                st.warning("The sudoku is incomplete.")
 
 
 @st.dialog("Input number")
@@ -108,187 +116,7 @@ def input_number(row: int, col: int) -> None:
             st.rerun()
 
 
-
-
-def set_session_value(key: str, value=None) -> None:
-    """
-    Set the value of a session state variable.
-    If no value is provided, then it means that it is a boolean and will be toggled.
-
-    :param key: name of the session state variable
-    :param value: value to set
-    :return: None
-    """
-
-    if value is None:
-        value = not st.session_state[key]
-    st.session_state[key] = value
-
-
-def solve_sudoku(column) -> None:
-    """
-    Solve the current sudoku puzzle using the backtracking algorithm.
-    To do so, save the puzzle to a text file, call the solver, and load back the solutions.
-
-    :param column: column to display the process
-    :return: None
-    """
-
-    if is_full(st.session_state.sudoku):
-        return None
-
-    with column:
-        with st.spinner("Solving..."):
-            save_sudoku_puzzle(
-                sudoku=st.session_state.sudoku,
-                file_path="sudoku_tmp.txt"
-            )
-            execution = call_exe(
-                file_name="run_backtrack.exe",
-                input_file="sudoku_tmp.txt"
-            )
-
-        with stylable_container(
-                key="results",
-                css_styles="""
-                .stAlert{
-                    text-align: center
-                }"""
-        ):
-            if execution:
-                solutions = load_solutions(path="Solutions")
-                set_session_value(key="solutions", value=solutions)
-                set_session_value(key="sol_idx", value=0)
-                st.success("Solution(s) loaded successfully.")
-            else:
-                st.error("Could not solve the sudoku.")
-
-
-def generate_sudoku(column) -> None:
-    """
-    Generate a new sudoku puzzle with the desired level of difficulty.
-
-    :param column: column to display the process
-    :return: None
-    """
-
-    with column:
-        if st.session_state.difficulty_level is None:
-            st.error("Please select a difficulty level.")
-            return None
-
-        with st.spinner("Generating..."):
-            ...
-            # TODO: uncomment the following lines and call the generator
-        #     execution = call_exe(
-        #         file_name="run_generator.exe",
-        #         input_file="4"
-        #     )
-        #
-        # if execution:
-        #     sudoku_gen = load_sudoku_board(file_path="sudoku_gen.txt")
-        #     set_session_value(key="sudoku_gen", value=sudoku_gen)
-        #     st.success("Sudoku generated successfully.")
-
-
-def clear() -> None:
-    """
-    Clear the sudoku puzzle and its solutions.
-
-    :return: None
-    """
-
-    set_session_value(key="sudoku", value=np.zeros((9, 9), dtype=int))
-    set_session_value(key="solutions", value=[])
-
-### ---------------------------------------------------------------------------------------------------- ###
-### --- SUDOKU BOARD --- ###
-
-
-st.markdown("<h1 style='text-align: center; font-weight: bold;'>Sudoku Solver & Generator</h1>", unsafe_allow_html=True)
-
-st.markdown(
-    """
-    This web page hosts a **Sudoku Solver** in the first part and a **Sudoku Generator** in the second.  
-    Check out the instructions!
-    
-    **P.S.** We suggest setting the browser zoom level to 100% (default). \\
-    You can find the source code at this github [repo](https://github.com/ggiuliopirotta/Sudoku).
-    """
-)
-
-st.write("---")
-
-st.markdown(
-    """
-    #### Solver
-    This tool is able to solve any sudoku puzzle, whether it holds a single solution or multiple ones: in such case just the five that are most similar to each other are are loaded. \\
-    When the **Solve** button is pressed, a popup window with the solutions will appear.
-    
-    Here is a recap of the main functionalities in this section:
-    - Upload a puzzle from a text file like this
-    - Freeze the non-empty cells of the grid to avoid messing up the current configuration
-    - check if the grid is valid
-    - solve the sudoku
-    
-    For the other features, read the tooltip hovering over with the mouse.
-    
-    """
-)
-
-cols = st.columns((6, 4), vertical_alignment="bottom")
-with cols[0]:
-    st.file_uploader(
-        key="uploaded_file",
-        label="Upload a sudoku puzzle",
-        type=["txt"],
-        on_change=handle_file_upload,
-        args=(cols[1],)
-    )
-
-cols = st.columns((1, 9), vertical_alignment="center")
-with cols[0]:
-    st.button(
-        label="Clear",
-        help="Clear the whole sudoku grid",
-        use_container_width=True,
-        on_click=clear
-    )
-with cols[1]:
-    st.checkbox(
-        key="freeze_config",
-        label="Freeze current configuration",
-        value=st.session_state.freeze_config,
-        on_change=set_freeze_mask,
-    )
-
-
-def get_background_color(hint1: np.ndarray, hint2: np.ndarray, row: int, col: int) -> str:
-    """
-    Get the background color of the cell in the sudoku grid.
-
-    :param hint1: first hint mask
-    :param hint2: second hint mask
-    :param row: row index
-    :param col: column index
-    :return: color
-    """
-
-    if st.session_state.freeze_config and st.session_state.sudoku_frz[row, col]:
-        if hint1[row, col]:
-            return "#99dd99"
-        if hint2[row, col]:
-            return "#ffd700"
-        return "#f0f0f0"
-
-    if hint1[row, col]:
-        return "#00ff00"
-    if hint2[row, col]:
-        return "#ffff00"
-    return "#ffffff"
-
-
-def generate_sudoku_block(block_idx: int, n_rows: int=3) -> None:
+def print_sudoku_block(block_idx: int, n_rows: int=3) -> None:
     """
     Generate and display a block of the sudoku puzzle.
     The first 2 blocks are closed with a white space to simulate the separation between blocks.
@@ -342,8 +170,142 @@ def generate_sudoku_block(block_idx: int, n_rows: int=3) -> None:
                         args=(row, col)
                     )
 
+
+def solve_sudoku(column) -> None:
+    """
+    Solve the current sudoku puzzle using the backtracking algorithm.
+    To do so, save the puzzle to a text file, call the solver, and load back the solutions.
+
+    :param column: column to display the process
+    :return: None
+    """
+
+    empty_folder("Solutions")
+    if is_full(st.session_state.sudoku):
+        return None
+
+    with column:
+        with st.spinner("Solving..."):
+            save_sudoku_puzzle(
+                sudoku=st.session_state.sudoku,
+                file_path="sudoku_tmp.txt"
+            )
+            execution = call_exe(
+                file_name="run_backtrack.exe",
+                input_file="sudoku_tmp.txt"
+            )
+
+        with stylable_container(
+                key="results",
+                css_styles="""
+                .stAlert{
+                    text-align: center
+                }"""
+        ):
+            if execution:
+                solutions = load_solutions(path="Solutions")
+                if solutions:
+                    set_session_value(key="solutions", value=solutions)
+                    set_session_value(key="sol_idx", value=0)
+                    st.success("Solution(s) loaded successfully.")
+                else:
+                    st.error("Could not solve the sudoku.")
+
+
+def generate_sudoku(column) -> None:
+    """
+    Generate a new sudoku puzzle with the desired level of difficulty.
+
+    :param column: column to display the process
+    :return: None
+    """
+
+    with column:
+        if st.session_state.difficulty_level is None:
+            st.error("Please select a difficulty level.")
+            return None
+
+        with st.spinner("Generating..."):
+            ...
+            # TODO: uncomment the following lines and call the generator
+        #     execution = call_exe(
+        #         file_name="run_generator.exe",
+        #         input_file="4"
+        #     )
+        #
+        # if execution:
+        #     sudoku_gen = load_sudoku_board(file_path="sudoku_gen.txt")
+        #     set_session_value(key="sudoku_gen", value=sudoku_gen)
+        #     st.success("Sudoku generated successfully.")
+
+
+### ---------------------------------------------------------------------------------------------------- ###
+### --- INTRODUCTION --- ###
+
+
+st.markdown("<h1 style='text-align: center; font-weight: bold;'>Sudoku Solver & Generator</h1>", unsafe_allow_html=True)
+
+st.markdown(
+    """
+    This web page hosts a **Sudoku Solver** in the first part and a **Sudoku Generator** in the second.  
+    Check out the instructions!
+    
+    **P.S.** We suggest setting the browser zoom level to 100% (default). \\
+    You can find the source code at this github [repo](https://github.com/ggiuliopirotta/Sudoku).
+    """
+)
+
+st.write("---")
+
+
+### ---------------------------------------------------------------------------------------------------- ###
+### --- SOLVER & BOARD --- ###
+
+
+st.markdown(
+    """
+    #### Solver
+    This tool is able to solve any sudoku puzzle, whether it holds a single solution or multiple ones: in such case just the five that are most similar to each other are are loaded. \\
+    When the **Solve** button is pressed, a popup window with the solutions will appear.
+    
+    Here is a recap of the main functionalities in this section:
+    - Upload a puzzle from a text file like this
+    - Freeze the non-empty cells of the grid to avoid messing up the current configuration
+    - check if the grid is valid
+    - solve the sudoku
+    
+    For the other features, read the tooltip hovering over with the mouse.
+    """
+)
+
+cols = st.columns((6, 4), vertical_alignment="bottom")
+with cols[0]:
+    st.file_uploader(
+        key="uploaded_file",
+        label="Upload a sudoku puzzle",
+        type=["txt"],
+        on_change=handle_file_upload,
+        args=(cols[1],)
+    )
+
+cols = st.columns((1, 9), vertical_alignment="center")
+with cols[0]:
+    st.button(
+        label="Clear",
+        help="Clear the whole sudoku grid",
+        use_container_width=True,
+        on_click=clear
+    )
+with cols[1]:
+    st.checkbox(
+        key="freeze_config",
+        label="Freeze current configuration",
+        value=st.session_state.freeze_config,
+        on_change=set_freeze_mask,
+    )
+
 for block_idx in range(3):
-    generate_sudoku_block(block_idx=block_idx)
+    print_sudoku_block(block_idx=block_idx)
 
 valid_inputs = st.checkbox(
     key="hide_invalid",
@@ -351,7 +313,6 @@ valid_inputs = st.checkbox(
     help="Remove the numbers that cannot be placed into the selected cell from the list in the dialog.",
     value=st.session_state.hide_invalid
 )
-
 
 cols = st.columns((1, 1, 7), vertical_alignment="center")
 with cols[0]:
@@ -361,7 +322,6 @@ with cols[0]:
         on_click=check_solution,
         args=(cols[2],)
     )
-
 with cols[1]:
         st.button(
             label="Solve",
@@ -369,6 +329,11 @@ with cols[1]:
             on_click=solve_sudoku,
             args=(cols[2],)
         )
+
+
+### ---------------------------------------------------------------------------------------------------- ###
+### --- SOLUTIONS --- ###
+
 
 if st.session_state.solutions:
     cols = st.columns((4, 8), vertical_alignment="center")
@@ -386,10 +351,10 @@ if st.session_state.solutions:
                     }
                 """
             ):
-                popup_cols = st.columns((5, 2, 1, 2), vertical_alignment="center")
-
                 solutions = st.session_state.solutions
                 sol_idx = st.session_state.sol_idx
+
+                popup_cols = st.columns((5, 2, 1, 2), vertical_alignment="center")
                 with popup_cols[0]:
                     st.markdown(f"Solution {sol_idx+1} of {len(solutions)}")
                 with popup_cols[1]:
@@ -406,6 +371,7 @@ if st.session_state.solutions:
                         on_click=set_session_value,
                         args=("sol_idx", sol_idx+1)
                     )
+
             st.html(generate_sudoku_html(solutions[sol_idx], st.session_state.sudoku))
             with open(f"Solutions/solution{sol_idx+1}.txt") as file:
                 st.download_button(
@@ -428,8 +394,11 @@ if st.session_state.solutions:
                 value=st.session_state.highlight_correct
             )
 
-
 st.write("---")
+
+
+### ---------------------------------------------------------------------------------------------------- ###
+### --- GENERATOR --- ###
 
 
 st.markdown(
@@ -443,7 +412,6 @@ st.markdown(
 
 cols = st.columns((2, 1.5, 7), vertical_alignment="bottom")
 col = st.columns((1))
-
 with cols[0]:
     st.number_input(
         key="difficulty_level",
@@ -451,7 +419,6 @@ with cols[0]:
         min_value=1,
         max_value=4,
     )
-
 with cols[1]:
     st.button(
         label="Generate",

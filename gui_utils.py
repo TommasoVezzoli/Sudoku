@@ -1,32 +1,7 @@
 import  numpy as np
-from    streamlit_extras.stylable_container import stylable_container
-import  streamlit as st
 import  os
+import  streamlit as st
 import  subprocess
-
-
-def check_solution(column) -> None:
-    """
-    Check if the current sudoku puzzle is a completed and the solution is valid.
-
-    :param column: column to display the result
-    :return: boolean
-    """
-
-    sudoku = st.session_state.sudoku
-    with column:
-        with stylable_container(
-                key="results",
-                css_styles="""
-                .stAlert{
-                    text-align: center
-                }"""
-        ):
-            if is_full(sudoku):
-                st.success("Sudoku is completed and valid.") if check_valid_sudoku(sudoku) else(
-                    st.error("Sudoku is invalid."))
-            else:
-                st.warning("Sudoku is incomplete.")
 
 
 def call_exe(file_name: str, input_file: str) -> bool:
@@ -37,6 +12,7 @@ def call_exe(file_name: str, input_file: str) -> bool:
     :param input_file:
     :return:
     """
+
     run_process = subprocess.run([file_name, input_file], capture_output=True, text=True)
     if run_process.returncode != 0:
         return False
@@ -69,6 +45,31 @@ def check_valid_sudoku(sudoku: np.ndarray) -> bool:
 
     return True
 
+
+def clear() -> None:
+    """
+    Clear the sudoku puzzle and its solutions.
+
+    :return: None
+    """
+
+    set_session_value(key="sudoku", value=np.zeros((9, 9), dtype=int))
+    set_session_value(key="freeze_config", value=False)
+    set_session_value(key="solutions", value=[])
+
+
+def empty_folder(path: str) -> None:
+    """
+    Remove all files in the specified folder.
+
+    :param path: path to the folder
+    :return: None
+    """
+
+    for file_name in os.listdir(path):
+        file_path = os.path.join(path, file_name)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
 
 def generate_sudoku_html(sudoku: np.ndarray, comparison :np.ndarray=None) -> None:
     """
@@ -127,6 +128,62 @@ def generate_sudoku_html(sudoku: np.ndarray, comparison :np.ndarray=None) -> Non
     return html
 
 
+def get_background_color(hint1: np.ndarray, hint2: np.ndarray, row: int, col: int) -> str:
+    """
+    Get the background color of the cell in the sudoku grid.
+
+    :param hint1: first hint mask
+    :param hint2: second hint mask
+    :param row: row index
+    :param col: column index
+    :return: color
+    """
+
+    if st.session_state.freeze_config and st.session_state.sudoku_frz[row, col]:
+        if hint1[row, col]:
+            return "#99dd99"
+        if hint2[row, col]:
+            return "#ffd700"
+        return "#f0f0f0"
+
+    if hint1[row, col]:
+        return "#00ff00"
+    if hint2[row, col]:
+        return "#ffff00"
+    return "#ffffff"
+
+
+def get_hint_masks(sudoku: np.ndarray, solutions: list) -> tuple:
+    """
+    Check whether the inputs are correct or not.
+    Place in one mask the cells that are correct in the closest solution,
+    and in the other mask the cells that are correct in the others.
+    This is a hint for the user.
+
+    :param sudoku: sudoku puzzle
+    :param solutions: list of solutions
+    :return:
+    """
+
+    n_solutions = len(solutions)
+    matches = [0 for _ in range(n_solutions)]
+    for l in range(n_solutions):
+        for i in range(9):
+            for j in range(9):
+                if sudoku[i, j] == solutions[l][i, j]:
+                    matches[l] += 1
+
+    reference = matches.index(max(matches))
+    mask1 = np.equal(sudoku, solutions[reference])
+    mask2 = (
+        np.logical_or.reduce([np.equal(sudoku, solutions[l]) for l in range(n_solutions) if l != reference])
+        if n_solutions > 1 else np.zeros(sudoku.shape, dtype=bool)
+    )
+    mask2[np.equal(mask1, mask2)] = False
+
+    return mask1, mask2
+
+
 def is_full(sudoku: np.ndarray) -> bool:
     """
     Check if the sudoku puzzle is full.
@@ -152,7 +209,6 @@ def list_possible_numbers(sudoku: np.ndarray, row: int, col: int, hide_invalid: 
 
     if hide_invalid:
         possible = set(range(1, 10))
-
         possible -= set(sudoku[row])
         possible -= set(sudoku[:, col])
         possible -= set(
@@ -235,32 +291,31 @@ def save_sudoku_puzzle(sudoku: np.ndarray, file_path: str) -> None:
             f.write(" ".join(map(str, row)) + "\n")
 
 
-def get_hint_masks(sudoku: np.ndarray, solutions: list) -> tuple:
+def set_freeze_mask() -> None:
     """
-    Check whether the inputs are correct or not.
-    Place in one mask the cells that are correct in the closest solution,
-    and in the other mask the cells that are correct in the others.
-    This is a hint for the user.
-    
-    :param sudoku: sudoku puzzle
-    :param solutions: list of solutions
-    :return:
+    Produce a mask to freeze the configuration of the sudoku puzzle.
+    This enables the user to solve the puzzle autonomously without messing up the initial configuration.
+
+    :return: None
     """
 
-    n_solutions = len(solutions)
-    matches = [0 for _ in range(n_solutions)]
-    for l in range(n_solutions):
-        for i in range(9):
-            for j in range(9):
-                if sudoku[i, j] == solutions[l][i, j]:
-                    matches[l] += 1
-    
-    ref = matches.index(max(matches))
-    mask1 = np.equal(sudoku, solutions[ref])
-    mask2 = (
-        np.logical_or.reduce([np.equal(sudoku, solutions[l]) for l in range(n_solutions) if l != ref])
-        if n_solutions > 1 else np.zeros(sudoku.shape, dtype=bool)
+    set_session_value(
+        key="sudoku_frz",
+        value=st.session_state.sudoku != 0 if st.session_state.freeze_config else(
+            np.zeros((9, 9), dtype=bool))
     )
-    mask2[np.equal(mask1, mask2)] = False
 
-    return mask1, mask2
+
+def set_session_value(key: str, value=None) -> None:
+    """
+    Set the value of a session state variable.
+    If no value is provided, then it means that it is a boolean and will be toggled.
+
+    :param key: name of the session state variable
+    :param value: value to set
+    :return: None
+    """
+
+    if value is None:
+        value = not st.session_state[key]
+    st.session_state[key] = value
