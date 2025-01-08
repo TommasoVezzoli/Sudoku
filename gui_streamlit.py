@@ -482,9 +482,7 @@ if np.any(st.session_state.sudoku_gen):
             args=("sudoku", st.session_state.sudoku_gen)
         )
     with cols[1]:
-        # TODO: replace the file path with the correct one
-        #  with open(f"sudoku_gen.txt") as file:
-        with open(f"sudoku_solution.txt") as file:
+        with open(f"sudoku_gen.txt") as file:
             st.download_button(
                 label="Download",
                 data=file,
