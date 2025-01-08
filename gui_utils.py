@@ -56,6 +56,7 @@ def clear() -> None:
     set_session_value(key="sudoku", value=np.zeros((9, 9), dtype=int))
     set_session_value(key="freeze_config", value=False)
     set_session_value(key="solutions", value=[])
+    set_session_value(key="hints", value=[])
 
 
 def empty_folder(path: str) -> None:
@@ -126,6 +127,175 @@ def generate_sudoku_html(sudoku: np.ndarray, comparison :np.ndarray=None) -> Non
 
     html = "<center>" + table_header + table_body + table_footer + "</center>"
     return html
+
+
+# def generate_sudoku_html_v1(sudoku: np.ndarray, comparison: np.ndarray = None, mode: str="edit") -> str:
+#     """
+#     Generate the HTML representation of a sudoku puzzle with editable cells.
+#     If a comparison is provided, the cells are colored according to whether the value is the same or differs.
+#
+#     :param sudoku: Sudoku puzzle
+#     :param comparison: Comparison for the Sudoku puzzle
+#     :param mode: Mode of the table (edit or fix)
+#
+#     :return: HTML string
+#     """
+#
+#     table_header = """
+#         <style>
+#             table {
+#                 border-collapse: collapse;
+#                 font-family: Calibri, sans-serif;
+#             }
+#             tbody {
+#                 border: solid medium;
+#             }
+#             td {
+#                 border: solid thin;
+#                 height: 2em;
+#                 width: 2em;
+#                 text-align: center;
+#                 padding: 0;
+#             }
+#             input {
+#                 width: 100%;
+#                 height: 100%;
+#                 border: none;
+#                 text-align: center;
+#                 font-size: 16px;
+#                 font-family: Calibri, sans-serif;
+#             }
+#         </style>
+#         <table>
+#             <col><col><col>
+#             <col><col><col>
+#             <col><col><col>
+#     """
+#
+#     table_footer = """
+#         </table>
+#     """
+#
+#     table_body = ""
+#     for i in range(sudoku.shape[0]):
+#         table_body += "<tr>"
+#         for j in range(sudoku.shape[1]):
+#             if comparison is not None:
+#                 cell_color = "" if sudoku[i, j] == comparison[i, j] else "background-color:#F8BBD0;"
+#             else:
+#                 cell_color = ""
+#
+#             border_style = "border-bottom: 3px solid black;" if (i + 1) % 3 == 0 else ""
+#             border_style += "border-right: 3px solid black;" if (j + 1) % 3 == 0 else ""
+#             str_num = str(sudoku[i, j]) if sudoku[i, j] != 0 else " "
+#
+#             if mode == "fix":
+#                 table_body += f"<td style='{cell_color} {border_style}'>" + str_num + "</td>"
+#             else:
+#                 table_body += (
+#                     f"<td style='{cell_color} {border_style}'>"
+#                     f"<input type='text' id='cell-{i}-{j}' maxlength='1'></td>"
+#                 )
+#
+#         table_body += "</tr>"
+#     html = "<center>" + table_header + table_body + table_footer + "</center>"
+#     return html
+
+
+# def generate_sudoku_html_v1(sudoku: np.ndarray, comparison: np.ndarray = None, mode: str = "edit") -> str:
+#     """
+#     Generate the HTML representation of a sudoku puzzle with editable cells.
+#     When the user presses Enter, the updated cell value and coordinates are sent.
+#
+#     :param sudoku: Sudoku puzzle
+#     :param comparison: Comparison for the Sudoku puzzle
+#     :param mode: Mode of the table (edit or fix)
+#     :return: HTML string
+#     """
+#
+#     table_header = """
+#         <style>
+#             table {
+#                 border-collapse: collapse;
+#                 font-family: Calibri, sans-serif;
+#             }
+#             tbody {
+#                 border: solid medium;
+#             }
+#             td {
+#                 border: solid thin;
+#                 height: 2em;
+#                 width: 2em;
+#                 text-align: center;
+#                 padding: 0;
+#             }
+#             input {
+#                 width: 100%;
+#                 height: 100%;
+#                 border: none;
+#                 text-align: center;
+#                 font-size: 16px;
+#                 font-family: Calibri, sans-serif;
+#             }
+#         </style>
+#         <table id="sudoku-table">
+#             <col><col><col>
+#             <col><col><col>
+#             <col><col><col>
+#     """
+#
+#     table_footer = """
+#         </table>
+#         <script>
+#             // Function to send updated cell value and coordinates to Streamlit
+#             function sendUpdate(row, col, value) {
+#                 const updateData = JSON.stringify({row: row, col: col, value: value});
+#                 parent.postMessage(updateData, "*");
+#             }
+#
+#             // Add event listeners to all editable cells
+#             document.addEventListener("DOMContentLoaded", () => {
+#                 const inputs = document.querySelectorAll("table#sudoku-table input");
+#                 inputs.forEach(input => {
+#                     input.addEventListener("keypress", (event) => {
+#                         if (event.key === "Enter") {
+#                             const idParts = input.id.split("-");
+#                             const row = parseInt(idParts[1]);
+#                             const col = parseInt(idParts[2]);
+#                             const value = input.value === "" ? 0 : parseInt(input.value);
+#                             sendUpdate(row, col, value);
+#                             event.preventDefault(); // Prevent form submission or default behavior
+#                         }
+#                     });
+#                 });
+#             });
+#         </script>
+#     """
+#
+#     table_body = ""
+#     for i in range(sudoku.shape[0]):
+#         table_body += "<tr>"
+#         for j in range(sudoku.shape[1]):
+#             if comparison is not None:
+#                 cell_color = "" if sudoku[i, j] == comparison[i, j] else "background-color:#F8BBD0;"
+#             else:
+#                 cell_color = ""
+#
+#             border_style = "border-bottom: 3px solid black;" if (i + 1) % 3 == 0 else ""
+#             border_style += "border-right: 3px solid black;" if (j + 1) % 3 == 0 else ""
+#             str_num = str(sudoku[i, j]) if sudoku[i, j] != 0 else " "
+#
+#             if mode == "fix":
+#                 table_body += f"<td style='{cell_color} {border_style}'>" + str_num + "</td>"
+#             else:
+#                 table_body += (
+#                     f"<td style='{cell_color} {border_style}'>"
+#                     f"<input type='text' id='cell-{i}-{j}' maxlength='1'></td>"
+#                 )
+#
+#         table_body += "</tr>"
+#     html = "<center>" + table_header + table_body + table_footer + "</center>"
+#     return html
 
 
 def get_background_color(hint1: np.ndarray, hint2: np.ndarray, row: int, col: int) -> str:
@@ -220,6 +390,33 @@ def list_possible_numbers(sudoku: np.ndarray, row: int, col: int, hide_invalid: 
     return list(possible)
 
 
+def load_hints(path: str) -> list:
+    """
+    Load the hints for the current sudoku from the folder to the session state.
+
+    :param path: path to the folder
+    :return: tuple of hints
+    """
+
+    hints = []
+    hint = ""
+    with open(path, "r") as f:
+        for line in f:
+            if line == "\n":
+                if hint.endswith("\n"):
+                    if hint.strip():
+                        hints.append(hint)
+                    hint = ""
+                else:
+                    hint += "\n" + line
+            else:
+                hint += "\n" + line
+        if hint:
+            hints.append(hint)
+    return hints
+
+
+
 def load_solutions(path: str) -> list:
     """
     Load all the solutions from folder to the session state.
@@ -309,7 +506,7 @@ def set_freeze_mask() -> None:
 def set_session_value(key: str, value=None) -> None:
     """
     Set the value of a session state variable.
-    If no value is provided, then it means that it is a boolean and will be toggled.
+    If no value is provided, then it means that the variable is a boolean and will be toggled.
 
     :param key: name of the session state variable
     :param value: value to set

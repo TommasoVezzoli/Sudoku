@@ -212,7 +212,7 @@ bool applyNakedSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                     printf("Error opening log file.\n");
                                     return false; // Exit if the log file cannot be opened
                                 }
-                                fprintf(logFile, "Naked Single: Placing %d in cell (%d, %d)\n", d, r, c);
+                                fprintf(logFile, "Naked Single: Placing %d in cell (%d, %d)\n\n", d, r, c);
                                 fclose(logFile); // Close the file before returning
                             }
                             return true;
@@ -261,7 +261,7 @@ bool applyHiddenSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                         printf("Error opening log file.\n");
                         return false; // Exit if the log file cannot be opened
                     }
-                    fprintf(logFile, "Hidden Single (Row): Placing %d in cell (%d, %d)\n", d, r, col);
+                    fprintf(logFile, "Hidden Single (Row): Placing %d in cell (%d, %d)\n\n", d, r, col);
                     fclose(logFile); // Close the file before returning
                 }
                 return true;
@@ -288,7 +288,7 @@ bool applyHiddenSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                         printf("Error opening log file.\n");
                         return false; // Exit if the log file cannot be opened
                     }
-                    fprintf(logFile, "Hidden Single (Column): Placing %d in cell (%d, %d)\n", d, row, c);
+                    fprintf(logFile, "Hidden Single (Column): Placing %d in cell (%d, %d)\n\n", d, row, c);
                     fclose(logFile); // Close the file before returning
                 }
                 return true;
@@ -322,7 +322,7 @@ bool applyHiddenSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                             printf("Error opening log file.\n");
                             return false; // Exit if the log file cannot be opened
                         }
-                        fprintf(logFile, "Hidden Single (Box): Placing %d in cell (%d, %d)\n", d, row, col);
+                        fprintf(logFile, "Hidden Single (Box): Placing %d in cell (%d, %d)\n\n", d, row, col);
                         fclose(logFile); // Close the file before returning
                     }
                     return true;
@@ -670,7 +670,7 @@ bool applyHiddenPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                 printf("Error opening log file.\n");
                                 return false; // Exit if the log file cannot be opened
                             }
-                            fprintf(logFile, "Hidden Pair: [%d, %d] in cells (%d, %d) and (%d, %d), cleared other candidates in these cells.\n", d1, d2, r1, c1, r2, c2);
+                            fprintf(logFile, "Hidden Pair: [%d, %d] in cells (%d, %d) and (%d, %d), cleared other candidates in these cells.\n\n", d1, d2, r1, c1, r2, c2);
                             fclose(logFile); // Close the file before returning
                         }
                         progress = true;

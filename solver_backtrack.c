@@ -1,5 +1,6 @@
 #include "helpers.h"
 #include "io.h"
+#include "human_solver.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -87,6 +88,11 @@ int main(int argc, char *argv[]) {
     parse_file(&sudoku, argv[1]);
     // print_table(&sudoku);
 
+    Sudoku sudoku_copy;
+    memcpy(&sudoku_copy, &sudoku, sizeof(Sudoku));
+    SolverStats stats_copy = {0};
+    solve_human(&sudoku_copy, &stats_copy, true);
+
     for (int row = 0; row < N; row++) {
         for (int col = 0; col < N; col++) {
             int num = sudoku.table[row][col];
@@ -106,11 +112,10 @@ int main(int argc, char *argv[]) {
     }
 
     // Clean the previous solutions, solve the Sudoku, and print the solutions found
-    printf("Max number of solution set to: %d\n", N_SOL);
-    system("rm -f Solutions/*");
+    // printf("Max number of solution set to: %d\n", N_SOL);
     int n_solutions = 0;
     solve_sudoku(&sudoku, &n_solutions);
-    printf("Found %d solutions\n", n_solutions);
+    // printf("Found %d solutions\n", n_solutions);
 
     return 0;
 }

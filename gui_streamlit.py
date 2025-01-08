@@ -19,6 +19,8 @@ if "init" not in st.session_state:
     st.session_state.hide_invalid       = False
     st.session_state.solutions          = []
     st.session_state.sol_idx            = 0
+    st.session_state.hints              = []
+    st.session_state.hints_idx          = 0
 
 
 ### ---------------------------------------------------------------------------------------------------- ###
@@ -180,6 +182,8 @@ def solve_sudoku(column) -> None:
     :return: None
     """
 
+    set_session_value(key="solutions", value=[])
+    set_session_value(key="hints", value=[])
     empty_folder("Solutions")
     if is_full(st.session_state.sudoku):
         return None
@@ -204,8 +208,10 @@ def solve_sudoku(column) -> None:
         ):
             if execution:
                 solutions = load_solutions(path="Solutions")
+                hints = load_hints(path="solver_actions.log")
                 if solutions:
                     set_session_value(key="solutions", value=solutions)
+                    set_session_value(key="hints", value=hints)
                     set_session_value(key="sol_idx", value=0)
                     st.success("Solution(s) loaded successfully.")
                 else:
@@ -214,7 +220,7 @@ def solve_sudoku(column) -> None:
 
 def generate_sudoku(column) -> None:
     """
-    Generate a new sudoku puzzle with the desired level of difficulty.
+    Generate a sudoku puzzle with the desired level of difficulty.
 
     :param column: column to display the process
     :return: None
@@ -226,17 +232,15 @@ def generate_sudoku(column) -> None:
             return None
 
         with st.spinner("Generating..."):
-            ...
-            # TODO: uncomment the following lines and call the generator
-        #     execution = call_exe(
-        #         file_name="run_generator.exe",
-        #         input_file="4"
-        #     )
-        #
-        # if execution:
-        #     sudoku_gen = load_sudoku_board(file_path="sudoku_gen.txt")
-        #     set_session_value(key="sudoku_gen", value=sudoku_gen)
-        #     st.success("Sudoku generated successfully.")
+            execution = call_exe(
+                file_name="run_generator.exe",
+                input_file="4"
+            )
+
+        if execution:
+            sudoku_gen = load_sudoku_board(file_path="sudoku_gen.txt")
+            set_session_value(key="sudoku_gen", value=sudoku_gen)
+            st.success("Sudoku generated successfully.")
 
 
 ### ---------------------------------------------------------------------------------------------------- ###
@@ -359,6 +363,7 @@ if st.session_state.solutions:
                     st.markdown(f"Solution {sol_idx+1} of {len(solutions)}")
                 with popup_cols[1]:
                     st.button(
+                        key="sol_prev",
                         label="⬅️",
                         disabled=(sol_idx == 0),
                         on_click=set_session_value,
@@ -366,6 +371,7 @@ if st.session_state.solutions:
                     )
                 with popup_cols[2]:
                     st.button(
+                        key="sol_next",
                         label="➡️",
                         disabled=(sol_idx == len(solutions)-1),
                         on_click=set_session_value,
@@ -393,6 +399,42 @@ if st.session_state.solutions:
                 """,
                 value=st.session_state.highlight_correct
             )
+
+    with st.popover(
+            label="Show hints",
+            use_container_width=True
+        ):
+            with stylable_container(
+                key="solution_popup",
+                css_styles="""
+                    button {
+                        border: none;
+                    }
+                """
+            ):
+                hints = st.session_state.hints
+                hints_idx = st.session_state.hints_idx
+
+                popup_cols = st.columns((20, 2, 1, 1), vertical_alignment="center")
+                with popup_cols[0]:
+                    st.markdown(f"Hint {hints_idx+1} of {len(hints)}")
+                with popup_cols[1]:
+                    st.button(
+                        key="hint_prev",
+                        label="⬅️",
+                        disabled=(hints_idx == 0),
+                        on_click=set_session_value,
+                        args=("hints_idx", hints_idx-1)
+                    )
+                with popup_cols[2]:
+                    st.button(
+                        key="hint_next",
+                        label="➡️",
+                        disabled=(hints_idx == len(hints)-1),
+                        on_click=set_session_value,
+                        args=("hints_idx", hints_idx+1)
+                    )
+            st.markdown(st.session_state.hints[hints_idx])
 
 st.write("---")
 
