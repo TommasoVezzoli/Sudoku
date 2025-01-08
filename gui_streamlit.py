@@ -226,6 +226,8 @@ def generate_sudoku(column) -> None:
     :return: None
     """
 
+    clear()
+
     with column:
         if st.session_state.difficulty_level is None:
             st.error("Please select a difficulty level.")
@@ -269,14 +271,14 @@ st.write("---")
 st.markdown(
     """
     #### Solver
-    This tool is able to solve any sudoku puzzle, whether it holds a single solution or multiple ones: in such case just the five that are most similar to each other are are loaded. \\
+    This tool is able to solve any sudoku puzzle, whether it holds a single solution or multiple ones: in such case just the five that are most similar to each other are loaded. \\
     When the **Solve** button is pressed, a popup window with the solutions will appear.
     
     Here is a recap of the main functionalities in this section:
     - Upload a puzzle from a text file like this
     - Freeze the non-empty cells of the grid to avoid messing up the current configuration
-    - check if the grid is valid
-    - solve the sudoku
+    - Check if the grid is valid
+    - Solve the sudoku
     
     For the other features, read the tooltip hovering over with the mouse.
     """
@@ -399,42 +401,42 @@ if st.session_state.solutions:
                 """,
                 value=st.session_state.highlight_correct
             )
-
-    with st.popover(
-            label="Show hints",
-            use_container_width=True
-        ):
-            with stylable_container(
-                key="solution_popup",
-                css_styles="""
-                    button {
-                        border: none;
-                    }
-                """
+    if st.session_state.hints:
+        with st.popover(
+                label="Show hints",
+                use_container_width=True
             ):
-                hints = st.session_state.hints
-                hints_idx = st.session_state.hints_idx
+                with stylable_container(
+                    key="solution_popup",
+                    css_styles="""
+                        button {
+                            border: none;
+                        }
+                    """
+                ):
+                    hints = st.session_state.hints
+                    hints_idx = st.session_state.hints_idx
 
-                popup_cols = st.columns((20, 2, 1, 1), vertical_alignment="center")
-                with popup_cols[0]:
-                    st.markdown(f"Hint {hints_idx+1} of {len(hints)}")
-                with popup_cols[1]:
-                    st.button(
-                        key="hint_prev",
-                        label="⬅️",
-                        disabled=(hints_idx == 0),
-                        on_click=set_session_value,
-                        args=("hints_idx", hints_idx-1)
-                    )
-                with popup_cols[2]:
-                    st.button(
-                        key="hint_next",
-                        label="➡️",
-                        disabled=(hints_idx == len(hints)-1),
-                        on_click=set_session_value,
-                        args=("hints_idx", hints_idx+1)
-                    )
-            st.markdown(st.session_state.hints[hints_idx])
+                    popup_cols = st.columns((20, 2, 1, 1), vertical_alignment="center")
+                    with popup_cols[0]:
+                        st.markdown(f"Hint {hints_idx+1} of {len(hints)}")
+                    with popup_cols[1]:
+                        st.button(
+                            key="hint_prev",
+                            label="⬅️",
+                            disabled=(hints_idx == 0),
+                            on_click=set_session_value,
+                            args=("hints_idx", hints_idx-1)
+                        )
+                    with popup_cols[2]:
+                        st.button(
+                            key="hint_next",
+                            label="➡️",
+                            disabled=(hints_idx == len(hints)-1),
+                            on_click=set_session_value,
+                            args=("hints_idx", hints_idx+1)
+                        )
+                st.markdown(st.session_state.hints[hints_idx])
 
 st.write("---")
 
@@ -482,6 +484,7 @@ if np.any(st.session_state.sudoku_gen):
             args=("sudoku", st.session_state.sudoku_gen)
         )
     with cols[1]:
+        # TODO: replace the file path with the correct one
         with open(f"sudoku_gen.txt") as file:
             st.download_button(
                 label="Download",
