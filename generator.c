@@ -5,14 +5,13 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h> /*for better randomization*/
+#include <time.h>
 #include <string.h>
 
 
 #define N_STARTING_PIVOTS 11
 #define N_SOL 5
 #define TIMEOUT_SECONDS 1
-
 
 
 /******************************************************************************
@@ -59,6 +58,7 @@ void permute_digits(Sudoku *sudoku) {
     }
 }
 
+
 /**
  * Function: swap_row_bands
  * ------------------------
@@ -82,6 +82,7 @@ void swap_row_bands(Sudoku *sudoku, int bandA, int bandB) {
         }
     }
 }
+
 
 /**
  * Function: swap_col_bands
@@ -107,6 +108,71 @@ void swap_col_bands(Sudoku *sudoku, int bandA, int bandB) {
     }
 }
 
+
+/**
+ * Function: rotate_sudoku
+ * ------------------------
+ * Rotates the Sudoku grid by the specified angle.
+ * Valid angles are 90, 180, and 270 degrees.
+ * The rotation changes the positions of the digits in the grid while preserving the Sudoku's solution properties.
+
+ * Parameters:
+ * - sudoku: Pointer to the Sudoku grid to be rotated.
+ * - angle: The angle by which the Sudoku grid should be rotated (90, 180, or 270 degrees).
+ */
+void rotate_sudoku(Sudoku *sudoku, int angle) {
+    Sudoku temp = *sudoku;
+    if (angle == 90) {
+        for (int r = 0; r < 9; r++) {
+            for (int c = 0; c < 9; c++) {
+                sudoku->table[c][8 - r] = temp.table[r][c];
+            }
+        }
+    } else if (angle == 180) {
+        for (int r = 0; r < 9; r++) {
+            for (int c = 0; c < 9; c++) {
+                sudoku->table[8 - r][8 - c] = temp.table[r][c];
+            }
+        }
+    } else if (angle == 270) {
+        for (int r = 0; r < 9; r++) {
+            for (int c = 0; c < 9; c++) {
+                sudoku->table[8 - c][r] = temp.table[r][c];
+            }
+        }
+    }
+}
+
+
+/**
+ * Function: reflect_sudoku
+ * -------------------------
+ * Reflects the Sudoku grid along the specified axis.
+ * The reflection can be horizontal (H) or vertical (V).
+ * This transformation adjusts the positions of the digits while preserving the solution properties.
+
+ * Parameters:
+ * - sudoku: Pointer to the Sudoku grid to be reflected.
+ * - axis: The axis of reflection ('H' for horizontal, 'V' for vertical).
+ */
+void reflect_sudoku(Sudoku *sudoku, char axis) {
+    Sudoku temp = *sudoku;
+    if (axis == 'H') { // Horizontal reflection
+        for (int r = 0; r < 9; r++) {
+            for (int c = 0; c < 9; c++) {
+                sudoku->table[r][8 - c] = temp.table[r][c];
+            }
+        }
+    } else if (axis == 'V') { // Vertical reflection
+        for (int r = 0; r < 9; r++) {
+            for (int c = 0; c < 9; c++) {
+                sudoku->table[8 - r][c] = temp.table[r][c];
+            }
+        }
+    }
+}
+
+
 /**
  * Function: random_transformations
  * --------------------------------
@@ -116,6 +182,7 @@ void swap_col_bands(Sudoku *sudoku, int bandA, int bandB) {
  * 1. Permuting digits 1 through 9.
  * 2. Swapping row bands.
  * 3. Swapping column bands.
+ * 4. Rotation or reflection of the grid.
  *
  * Parameters:
  * - sudoku: Pointer to the Sudoku grid to be transformed.
@@ -143,29 +210,57 @@ void random_transformations(Sudoku *sudoku) {
     bandB = rand() % 3;
     swap_col_bands(sudoku, bandA, bandB);
 
-    // (Optional) Add row-within-band or col-within-band swaps
-    // for even more variety.
+    // 4) Rotations and reflections
+    int transform = rand() % 4;
+    switch (transform) {
+        case 0:
+            rotate_sudoku(sudoku, 90); // Rotate 90 degrees
+            break;
+        case 1:
+            rotate_sudoku(sudoku, 180); // Rotate 180 degrees
+            break;
+        case 2:
+            rotate_sudoku(sudoku, 270); // Rotate 270 degrees
+            break;
+        case 3:
+            reflect_sudoku(sudoku, 'H'); // Reflect horizontally
+            break;
+        case 4:
+            reflect_sudoku(sudoku, 'V'); // Reflect vertically
+            break;
+    }
+
 }
 
+
 // ---------------------------------------------------------------------------------------------------- //
-// --- VALID GRID GENERATOR --- //
+// --- UNIQUE SOLUTION CHECKER --- //
 
 /**
  * Function: count_solutions_recursive
  * -----------------------------------
- * Recursive helper function to count the number of solutions for a Sudoku puzzle
- * using a backtracking approach. Tracks the number of trials (search steps) performed.
- *
+ * Helper function that recursively counts the number of solutions for a given Sudoku puzzle using 
+ * backtracking. Tracks the number of trials (search steps) and ensures computation stays within a 
+ * given timeout.
+
  * Parameters:
- * - sudoku: Pointer to the Sudoku structure to solve.
- * - n_solutions: Pointer to a variable to count the number of solutions found.
- * - trials: Pointer to a variable to count the number of search steps performed.
- *
+ * - sudoku: Pointer to the Sudoku grid.
+ * - n_solutions: Pointer to a variable that tracks the number of solutions found.
+ * - trials: Pointer to a variable that tracks the number of search steps performed.
+ * - start_time: The clock time when the function was called in dynamic_dig, used for timeout checks.
+
  * Returns:
- * - The number of solutions found.
+ * - The total number of solutions found so far. If the timeout is exceeded, returns the current count.
  */
-int count_solutions_recursive(Sudoku *sudoku, int *n_solutions, int *trials) {
+int count_solutions_recursive(Sudoku *sudoku, int *n_solutions, int *trials, clock_t start_time) {
     int row, col;
+
+    clock_t current_time = clock();
+    double elapsed_time = ((double)(current_time - start_time)) / CLOCKS_PER_SEC;
+    if (elapsed_time > TIMEOUT_SECONDS) {
+        // printf("\nTimeout exceeded during grid generation!\n");
+        return false; // Signal failure to generate a count solutions within the time limit
+    }
 
     if (!find_empty(sudoku, &row, &col)) {
         (*n_solutions)++;
@@ -176,7 +271,7 @@ int count_solutions_recursive(Sudoku *sudoku, int *n_solutions, int *trials) {
         (*trials)++;  // Increment the trial counter for each attempt
         if (is_valid(sudoku, guess, row, col)) {
             sudoku->table[row][col] = guess;
-            if (count_solutions_recursive(sudoku, n_solutions, trials) == N_SOL) {
+            if (count_solutions_recursive(sudoku, n_solutions, trials, start_time) == N_SOL) {
                 return N_SOL;
             }
             sudoku->table[row][col] = 0;  // Backtrack
@@ -188,88 +283,57 @@ int count_solutions_recursive(Sudoku *sudoku, int *n_solutions, int *trials) {
 /**
  * Function: count_solutions
  * -------------------------
- * Counts the number of solutions for a given Sudoku puzzle using a backtracking algorithm.
- * It also computes the total number of trials (or search steps) performed during the enumeration process,
- * which can be used to evaluate the computational complexity of solving the puzzle.
- *
+ * Counts the number of solutions for a given Sudoku puzzle using the recursive helper function 
+ * `count_solutions_recursive`. Includes timeout management for the computation.
+
  * Parameters:
- * - sudoku: Pointer to the Sudoku structure representing the puzzle to solve.
- *
+ * - sudoku: Pointer to the Sudoku grid.
+ * - start_time: The clock time when the function was called in dynamic_dig, used for timeout checks.
+
  * Returns:
- * - The number of solutions found for the Sudoku puzzle.
+ * - The total number of solutions for the Sudoku grid. If the timeout is exceeded, the count may be incomplete.
  */
-int count_solutions(Sudoku *sudoku) {
+int count_solutions(Sudoku *sudoku, clock_t start_time) {
     int n_solutions = 0;
     int trials = 0;  // Initialize the trial counter
-    return count_solutions_recursive(sudoku, &n_solutions, &trials);
+    return count_solutions_recursive(sudoku, &n_solutions, &trials, start_time);
 }
+
 
 // ---------------------------------------------------------------------------------------------------- //
-// --- UNIQUE SOLUTION CHECKER --- //
+// --- VALID GRID GENERATOR --- //
 
 /**
- * Function: check_uniqueness_reduction_absurdity
- * ----------------------------------------------
- * Verifies if removing a cell value preserves a unique solution using a "reduction to absurdity" approach.
- *
+ * Function: solve_sudoku
+ * -----------------------
+ * Attempts to solve the given Sudoku puzzle using a backtracking algorithm. 
+ * Tracks the number of solutions found and ensures computation stays within a timeout limit.
+
  * Parameters:
- * - sudoku: Pointer to the Sudoku structure.
- * - row: Row index of the cell.
- * - col: Column index of the cell.
- *
+ * - sudoku: Pointer to the Sudoku grid to be solved.
+ * - n_solutions: Pointer to a variable that tracks the number of solutions found.
+ * - start_time: The clock time when the function generate_valid_grid was called, used for timeout checks.
+
  * Returns:
- * - 1 if the cell can be safely removed while preserving uniqueness.
- * - 0 otherwise.
+ * - true if the grid has at least one solution (indicating a valid puzzle), false otherwise.
  */
-int check_uniqueness_reduction_absurdity(Sudoku *sudoku, int row, int col)
-{
-    // Make a local copy so we don't mess up the original puzzle
-    Sudoku localCopy;
-    memcpy(&localCopy, sudoku, sizeof(Sudoku));
-    
-    // The digit we're 'digging out'
-    int removedDigit = localCopy.table[row][col];
-
-    // Remove the digit from the local copy
-    localCopy.table[row][col] = 0;
-    
-    // Try every possible digit except the removed one
-    for (int guess = 1; guess <= 9; guess++) {
-        if (guess == removedDigit) 
-            continue;
-        
-        if (is_valid(&localCopy, guess, row, col)) {
-            localCopy.table[row][col] = guess;
-            
-            // If a valid solution exists with this 'guess',
-            // that means there's *at least* two solutions overall.
-            if (count_solutions(&localCopy) > 0) {
-                return 0;  // NOT unique
-            }
-            
-            // Revert to empty and continue checking
-            localCopy.table[row][col] = 0;
-        }
-    }
-
-    // If no alternate digit yields a solution,
-    // the puzzle is unique with the originally removed digit.
-    return 1; // Unique
-}
-
-
 bool solve_sudoku(
     Sudoku *sudoku,
-    int *n_solutions
+    int *n_solutions,
+    clock_t start_time
 ) {
     int row, col;
 
-    // Update the number of solutions and save the current one if found
+    clock_t current_time = clock();
+    double elapsed_time = ((double)(current_time - start_time)) / CLOCKS_PER_SEC;
+    if (elapsed_time > TIMEOUT_SECONDS) {
+        // printf("\nTimeout exceeded during grid generation!\n");
+        return false; // Signal failure to find a solution within the time limit
+    }
+
+    // Update the number of solutions
     if (!find_empty(sudoku, &row, &col)) {
         (*n_solutions)++;
-        char filename[256];
-        snprintf(filename, sizeof(filename), "Solutions/solution%d.txt", *n_solutions);
-        write_to_file(sudoku, filename);
         
         if (*n_solutions == N_SOL) {
             return true;
@@ -280,7 +344,7 @@ bool solve_sudoku(
     for (int guess = 1; guess <= 9; guess++) {
         if (is_valid(sudoku, guess, row, col)) {
             sudoku->table[row][col] = guess;
-            if (solve_sudoku(sudoku, n_solutions)) {
+            if (solve_sudoku(sudoku, n_solutions, start_time)) {
                 if (*n_solutions == N_SOL) {
                     return true;
                 }
@@ -293,7 +357,6 @@ bool solve_sudoku(
     return false;
 }
 
-/*I USED THE BACKTRACK SOLVER INSTEAD OF THE COUNT_SOLUTION AS IT IS MORE RELIABLE; COUNT SOLUTIONS MAY ENTER INFINITE LOOP*/
 /**
  * Function: generate_valid_grid
  * -----------------------------
@@ -316,7 +379,7 @@ bool generate_valid_grid(Sudoku *sudoku) {
         clock_t current_time = clock();
         double elapsed_time = ((double)(current_time - start_time)) / CLOCKS_PER_SEC;
         if (elapsed_time > TIMEOUT_SECONDS) {
-            printf("\nTimeout exceeded during grid generation!\n");
+            // printf("\nTimeout exceeded during grid generation!\n");
             return false; // Signal failure to generate a grid within the time limit
         }
 
@@ -329,12 +392,9 @@ bool generate_valid_grid(Sudoku *sudoku) {
                 sudoku->table[row][col] = guess;
             }
         }
-        // Terminate if the puzzle has a unique solution
-        // if (count_solutions(sudoku) >= 1) {
-        //     return true;
-        // }
+        // Terminate if the puzzle has a solution
         int n_solutions = 0;
-        if (solve_sudoku(sudoku, &n_solutions)) {
+        if (solve_sudoku(sudoku, &n_solutions, start_time)) {
             return true;
         }
         // Reset the grid otherwise
@@ -355,12 +415,12 @@ bool generate_valid_grid(Sudoku *sudoku) {
 
 /**
  * Function: get_next_cell
- * -----------------------
- * Get the next cell to be dug in the generation of the Sudoku puzzle.
- * 
+ * ------------------------
+ * Randomly selects the next cell in the Sudoku grid to attempt removal or modification during the digging phase.
+
  * Parameters:
- * - row: Pointer to the row of the cell.
- * - col: Pointer to the col of the cell.
+ * - row: Pointer to an integer that will hold the row index of the selected cell.
+ * - col: Pointer to an integer that will hold the column index of the selected cell.
  */
 void get_next_cell(
     int *row,
@@ -374,348 +434,298 @@ void get_next_cell(
 /**
  * Function: sample_cells_bound
  * ----------------------------
- * Sample the number of cells to be given in the generated puzzle.
- * Note: The bounds for the number of given cells in the generated puzzle are listed below.
- *      Level     Total cells
- *      ------------------------
- *        1         39 - 45
- *        2         34 - 38
- *        3         28 - 33
- *        4         23 - 27
- * 
+ * Generates the bound for the number of filled cells to leave in a Sudoku puzzle,
+ * based on the desired difficulty level. Adjusts the range of filled cells to reflect
+ * different levels of difficulty.
+
  * Parameters:
- * - level: The level of difficulty of the Sudoku.
- * 
+ * - level: Desired difficulty level (1–4).
+
  * Returns:
- * - The bound on the cells to be given.
+ * - A random value within the specified range for the number of filled cells:
+ *   Level 1: 33–40 cells.
+ *   Level 2: 28–33 cells.
+ *   Level 3: 24–28 cells.
+ *   Level 4: 19–24 cells.
  */
 int sample_cells_bound(int level) {
     int bound = rand();
     if (level == 1) {
-        return bound % 7 + 39;
+        // Easy puzzles generally have more givens (e.g., 33-40 cells)
+        return bound % 7 + 33; // Range: 33-40
     } else if (level == 2) {
-        return bound % 5 + 34;
+        // Medium puzzles have slightly fewer givens (e.g., 28-33 cells)
+        return bound % 5 + 28; // Range: 28-33
     } else if (level == 3) {
-        return bound % 6 + 28;
+        // Hard puzzles have even fewer givens (e.g., 24-28 cells)
+        return bound % 4 + 24; // Range: 24-28
     } else if (level == 4) {
-        return bound % 5 + 21;
+        // Very hard puzzles have the fewest givens (e.g., 19-24 cells)
+        return bound % 5 + 19; // Range: 19-24
     }
+    return 30; // Default fallback
 }
 
-
-/**
- * Function: sample_row_col_bound
- * ------------------------------
- * Samples the lower bound for the number of given cells in each row and column 
- * for a Sudoku puzzle based on the difficulty level.
- *
- * The row/column lower bound values are determined as follows:
- * 
- *      Level     Minimum Given Cells in Rows/Columns
- *      ---------------------------------------------
- *        1                  4
- *        2                  3
- *        3                  2
- *        4                  0
- *
- * Parameters:
- * - level: The difficulty level of the Sudoku (1–4).
- *
- * Returns:
- * - The minimum number of given cells required in rows and columns for the specified level.
- */
-int sample_row_col_bound(int level) {
-    if (level == 1) {
-        return 4;
-    } else if (level == 2) {
-        return 3;
-    } else if (level == 3) {
-        return 2;
-    } else if (level == 4) {
-        return 0;
-    }
-}
 
 // ---------------------------------------------------------------------------------------------------- //
 
-// --- DIGGING FOR level 1-3-4 --- //
+
+// --- DIGGING --- //
 /**
- * Function: timed_dig
- * -------------------
- * Implements the digging procedure for Sudoku level 4. Cells are removed iteratively 
- * until the desired number of givens is reached or a timeout occurs.
- *
- * Key features:
- * - A timeout mechanism is in place to prevent excessive computation time.
- * - Ensures the puzzle remains uniquely solvable after each cell removal.
- * - Applies level-specific constraints on the number of givens per row and column.
- *
+ * Function: dynamic_dig
+ * ----------------------
+ * Implements a flexible cell removal strategy for creating Sudoku puzzles.
+ * Cells are removed iteratively while ensuring the puzzle remains uniquely solvable and adheres to the required difficulty level.
+ * This method checks if the puzzle requires techniques of a certain level after removing each cell.
+
  * Parameters:
  * - sudoku: Pointer to the Sudoku grid to be modified.
- * - level: The difficulty level for which the grid is being generated.
+ * - level: Desired difficulty level (1–4).
+ * - cell_bound: Minimum number of cells that must remain filled in the puzzle.
  */
-void sudoku_dig(Sudoku *sudoku, int level, int cell_bound) {
-    int row_col_bound;
-
-    row_col_bound = sample_row_col_bound(level);
-
-    int givens_row_arr[N] = {0};
-    int givens_col_arr[N] = {0};
-    int total_givens = N * N;
-
-    clock_t start_time = clock(); // Record the start time
-
-    // Initialize counts of givens per row and column
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            if (sudoku->table[i][j] != 0) {
-                givens_col_arr[j]++;
-                givens_row_arr[i]++;
-            }
-        }
-    }
-
-    int row = rand() % N;
-    int col = rand() % N;
+void dynamic_dig(Sudoku *sudoku, int level, int cell_bound) {
+    int total_givens = 81;
+    clock_t start_time = clock();
+    bool solving_mode = false;
 
     while (total_givens > cell_bound) {
-        // Check timeout
         clock_t current_time = clock();
         double elapsed_time = ((double)(current_time - start_time)) / CLOCKS_PER_SEC;
         if (elapsed_time > TIMEOUT_SECONDS) {
-            printf("\nTimeout exceeded during digging!\n");
+            // printf("Timeout during digging!\n");
             break;
         }
 
-        if (sudoku->table[row][col] == 0) {
-            get_next_cell(&row, &col);
-            continue; // Skip already empty cells
-        }
+        int row = rand() % 9;
+        int col = rand() % 9;
+        if (sudoku->table[row][col] == 0) continue; // Skip empty cells
 
-        if (givens_row_arr[row] <= row_col_bound || givens_col_arr[col] <= row_col_bound) {
-            get_next_cell(&row, &col);
+        int backup = sudoku->table[row][col];
+        sudoku->table[row][col] = 0;
+
+        SolverStats temp_stats = {0};
+        Sudoku temp_sudoku;
+        memcpy(&temp_sudoku, sudoku, sizeof(Sudoku));
+
+        if (!solve_human(&temp_sudoku, &temp_stats, solving_mode) || count_solutions(sudoku, clock()) != 1) {
+            sudoku->table[row][col] = backup; // Restore if unsolvable or not unique
             continue;
         }
 
-        int tmp = sudoku->table[row][col];
+        total_givens--;
 
-        if (check_uniqueness_reduction_absurdity(sudoku, row, col) != 1){
-            sudoku->table[row][col] = tmp; // Revert if not unique
-        } else {
-            // Successfully removed the cell
-            sudoku->table[row][col] = 0;
-            givens_col_arr[col]--;
-            givens_row_arr[row]--;
-            total_givens--;
+        // Check if the desired technique level is achieved
+        bool requires_level_3 = temp_stats.naked_triple > 0 || temp_stats.pointing_triple > 0 || temp_stats.hidden_triple > 0;
+        bool requires_level_4 = temp_stats.hidden_triple > 0;
+        if ((level == 3 && requires_level_3) || (level == 4 && requires_level_4)) {
+            break;
         }
-
-        get_next_cell(&row, &col); // Move to the next cell
     }
 }
-
 
 // ---------------------------------------------------------------------------------------------------- //
 // --- LEVEL ASSESSMENT --- //
 
 /**
  * Function: assess_level
- * ----------------------
- * Evaluates the difficulty of the generated Sudoku puzzle using the specified rating formula.
- *
- * The function integrates the `solve_human` method to simulate solving the puzzle and
- * collects the frequency of each technique used. It then calculates the difficulty score `D`
- * based on the following formula:
- *
- *      D = 0.2 * (50 - G) + 0.15 * (5 - R) + 0.4 * T + 0.25 * S / 10
- *
- * Where:
- * - G: Number of given cells in the puzzle.
- * - R: Minimum number of givens in rows/columns.
- * - T: Weighted sum of techniques used during solving:
- *       T = sum(w_i * f_i), where w_i is the weight and f_i is the frequency of technique i.
- * - S: Search depth during solving, scaled to a range of 0–10.
- *
- * The function exits the puzzle generation loop if the assessed difficulty level
- * matches the desired difficulty level. Otherwise, it retries with a new puzzle.
- *
+ * -----------------------
+ * Determines the difficulty level of a Sudoku puzzle based on the techniques
+ * required to solve it using a human-like solver. Flags techniques into four categories
+ * and returns the level that matches the puzzle's requirements.
+
  * Parameters:
- * - sudoku: Pointer to the digged Sudoku grid.
- * - possible: 3D boolean array representing possible values for each cell.
- * - level: Desired difficulty level (1–4).
- *
+ * - sudoku: Pointer to the Sudoku grid to be assessed.
+ * - stats: Pointer to a `SolverStats` structure that tracks the solving techniques used.
+ * - input_level: The desired difficulty level (1–4).
+
  * Returns:
- * - assessed difficulty.
+ * - The assessed difficulty level if it matches `input_level`.
+ * - -1 if the puzzle is unsolvable, doesn't match the desired level, or lacks the required techniques.
  */
 int assess_level(Sudoku *sudoku, SolverStats *stats, int input_level) {
-    
-    // 1. Calculate the number of givens (G)
-    int givens = 0;
-    for (int row = 0; row < N; row++) {
-        for (int col = 0; col < N; col++) {
-            if (sudoku->table[row][col] != 0) {
-                givens++;
-            }
-        }
-    }
-    // 2. Initialize variables for counting techniques (done outside)
-    // SolverStats stats = {0};
-
-    // 3. Solve the puzzle with the human solver and track technique stats
+    // Copy the Sudoku puzzle
     Sudoku sudoku_copy;
-    memcpy(&sudoku_copy, sudoku, sizeof(Sudoku)); // Create a copy of the unsolved puzzle
+    memcpy(&sudoku_copy, sudoku, sizeof(Sudoku));
+    bool solving_mode = true;
 
-    // if (!solve_human(&sudoku_copy, stats) && !sudokuSolver(&sudoku_copy, stats)) { // If the puzzle is unsolvable by the human solver
-    if (!solve_human2(&sudoku_copy, stats)) { 
-        // printf("Puzzle unsolvable by human techniques. Retrying...\n");
-        return -1; // Signal to retry in the main loop
+    // Solve the puzzle with the human solver and track techniques
+    if (!solve_human(&sudoku_copy, stats, solving_mode)) {
+        return -1; // Signal to retry if unsolvable
     }
 
-    // 4. Determine R (minimum row/column constraint met)
-    int row_col_bound = sample_row_col_bound(input_level);
+    // Flags for technique levels
+    bool requires_level_1 = stats->naked_single > 0 || stats->hidden_single > 0;
+    bool requires_level_2 = ((stats->naked_pair + stats->hidden_pair + stats->pointing_pair) > 1);
+    bool requires_level_3 = ((stats->naked_triple + stats->pointing_triple + stats->hidden_triple) > 0);
+    bool requires_level_4 = stats->x_wing > 0;
 
-    // 5. Compute T (weighted human techniques)
-    double weighted_techniques = 
-        0.6 * stats->naked_single + 
-        1 * stats->hidden_single + 
-        3 * stats->naked_pair + 
-        4 * stats->hidden_pair + 
-        4 * stats->pointing_pair + 
-        5 * stats->naked_triple + 
-        5 * stats->pointing_triple + 
-        6 * stats->hidden_triple + 
-        7 * stats->x_wing;
-
-    // 6. Compute S (scaled solving steps, normalized by 10)
-    // int max_depth_search = 0;
-    int trials = 0;
-    int n_solutions = 0; // Dummy variable since we don't need the number of solutions here
-    count_solutions_recursive(sudoku, &n_solutions, &trials);
-    printf("Trials: %d\n", trials);
-    double S = (double)trials / 100000.0 * 10.0;
-    if (S > 10.0) S = 10.0; // Cap S at 10
-
-    // 7. Compute the difficulty rating (D)
-    printf("Givens: %d\n", givens);
-    printf("Row/col bound: %d\n", row_col_bound);
-    printf("Techniques score: %lf\n",weighted_techniques);
-    printf("Solving steps: %lf\n", S);
-
-    if (input_level == 4 && weighted_techniques < 50){
-        return -1;
-    }
-
-    double difficulty = 
-        0.1 * (50 - givens) + 
-        0.15 * (5 - row_col_bound) + 
-        0.5 * weighted_techniques + 
-        0.25 * (S / 10.0);
-    
-    printf("Difficulty found: %lf\n", difficulty);
-
-    // 8. Map difficulty rating to level
-    int assessed_level;
-    if (difficulty >= 5 && difficulty <= 15) {
-        assessed_level = 1;
-    } else if (difficulty > 15 && difficulty <= 20) {
-        assessed_level = 2;
-    } else if (difficulty > 20 && difficulty <= 24) {
-        assessed_level = 3;
-    } else if (difficulty > 24) {
+    // Determine assessed level
+    int assessed_level = 1; // Default to level 1
+    if (requires_level_4) {
         assessed_level = 4;
-    } else {
-        return -1;
+    } else if (requires_level_3) {
+        assessed_level = 3;
+    } else if (requires_level_2) {
+        assessed_level = 2;
     }
 
-    // 9. Check if assessed level matches the input level
+    // Check if the assessed level matches the input level
+    if (assessed_level != input_level) {
+        return -1; // Signal to retry
+    }
+
     return assessed_level;
 }
+
 
 
 // ---------------------------------------------------------------------------------------------------- //
 // --- MAIN FUNCTION --- //
 
-/*POSSIBLE IDEA: apply random transformation AFTER digging, and then the same transformation also to the original puzzle
-in order to avoid having always the same digging pattern*/
+// Array of known seed filenames for level 3 and level 4
+const char *level_3_seeds[] = {
+    "seeds/level3/puzzle1.txt",
+    "seeds/level3/puzzle2.txt",
+    "seeds/level3/puzzle3.txt",
+    "seeds/level3/puzzle4.txt",
+    "seeds/level3/puzzle5.txt",
+    "seeds/level3/puzzle6.txt",
+    "seeds/level3/puzzle7.txt",
+    "seeds/level3/puzzle8.txt",
+    "seeds/level3/puzzle9.txt",
+    "seeds/level3/puzzle10.txt"
+};
 
+const char *level_4_seeds[] = {
+    "seeds/level4/puzzle1.txt",
+    "seeds/level4/puzzle2.txt",
+    "seeds/level4/puzzle3.txt",
+    "seeds/level4/puzzle4.txt",
+    "seeds/level4/puzzle5.txt"
+};
 
 /**
  * Function: main
  * --------------
- * Entry point for the Sudoku generator program. The program generates Sudoku puzzles
- * with a specific difficulty level (1–4) based on the defined rating formula.
- *
- * The main function performs the following steps:
+ * Entry point for the Sudoku generator program. Handles puzzle generation
+ * for difficulty levels 1–4. Levels 1–2 are generated dynamically using a
+ * structured digging process, while levels 3–4 are based on pre-existing
+ * seed puzzles with random transformations.
+
+ * Key Steps:
  * 1. Accepts user input for the desired difficulty level.
- * 2. Generates a valid Sudoku grid using randomized backtracking.
- * 3. Applies the digging procedure to remove cells according to the difficulty bounds.
- * 4. Assesses the difficulty of the resulting puzzle using the `assess_level` function.
- * 5. Outputs the generated puzzle and writes it to a file if the difficulty matches.
- *
+ * 2. For levels 1–2, generates a valid grid dynamically and removes cells while ensuring uniqueness.
+ * 3. For levels 3–4, selects a random pre-generated seed puzzle, applies random transformations,
+ *    and ensures it adheres to the desired level. This because generating hard puzzles on the fly 
+ *    could be computationally intensive, making user experience slow.
+ * 4. Outputs the generated puzzle and writes it to a file if it matches the input level.
+
  * Returns:
- * - 0 on successful execution, otherwise an error code.
+ * - 0 on successful execution, or an error code for invalid inputs.
  */
-int main() {
+int main(int argc, char *argv[]) {
+
+    if (argc != 2) {
+        printf("Usage: %s <input_file>\n", argv[0]);
+        return 1;
+    }
     srand(time(NULL)); // Initialize random seed
 
     Sudoku sudoku;
     SolverStats stats = {0};
-    int level;
-    printf("\nEnter the level desired (1-4): ");
-    if (scanf("%d", &level) != 1) { // Validate input
-        printf("Invalid input! Please enter an integer between 1 and 4.\n");
-        return 1; // Exit if input is invalid
-    }
+    int level = atoi(argv[1]);
+    // printf("\nEnter the level desired (1-4): ");
+    // if (scanf("%d", &level) != 1) { // Validate input
+    //     printf("Invalid input! Please enter an integer between 1 and 4.\n");
+    //     return 1; // Exit if input is invalid
+    // }
 
     // Validate the level input
-    if (level < 1 || level > 4) {
-        printf("Invalid level! Please enter a value between 1 and 4.\n");
-        return 1; // Exit if the level is out of range
-    }
+    // if (level < 1 || level > 4) {
+    //     printf("Invalid level! Please enter a value between 1 and 4.\n");
+    //     return 1; // Exit if the level is out of range
+    // }
 
-    while (1) {
-        // Step 1: Generate a valid grid
-        printf("\nGenerating a new valid grid...\n");
-        if (!generate_valid_grid(&sudoku)) {
-            printf("Failed to generate a valid grid within the time limit. Retrying...\n");
-            continue; // Retry the generation process
-        }
-        random_transformations(&sudoku);
-        print_table(&sudoku);
+    if (level <= 2) {
+        while (1) {
+            // Step 1: Generate a valid grid
+            // printf("\nGenerating a new valid grid...\n");
+            if (!generate_valid_grid(&sudoku)) {
+                // printf("Failed to generate a valid grid within the time limit. Retrying...\n");
+                continue; // Retry the generation process
+            }
+            // printf("\nGrid generated!\n");
+            random_transformations(&sudoku);
+            // print_table(&sudoku);
 
-        // Step 2: Attempt the digging procedure
-        int cell_bound = sample_cells_bound(level);
-        printf("\nStarting the digging procedure...\n");
-        sudoku_dig(&sudoku, level, cell_bound);
+            // Step 2: Attempt the digging procedure
+            int cell_bound = sample_cells_bound(level);
+            // printf("\nStarting the digging procedure...\n");
+            dynamic_dig(&sudoku, level, cell_bound);
 
-        // Check if the puzzle meets the desired criteria
-        int total_givens = 0;
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                if (sudoku.table[i][j] != 0) {
-                    total_givens++;
+            // Check if the puzzle meets the desired criteria
+            int total_givens = 0;
+            for (int i = 0; i < N; i++) {
+                for (int j = 0; j < N; j++) {
+                    if (sudoku.table[i][j] != 0) {
+                        total_givens++;
+                    }
                 }
             }
-        }
-        if (total_givens > cell_bound) {
-            continue;
-        }
-        SolverStats stats = {0};
-        int assessed_level = assess_level(&sudoku, &stats, level);
-        if (assessed_level == level) {
-            printf("Generated puzzle matches desired difficulty level %d.\nStats:\n", level);
-            print_stats(&stats);
-            break;
-        } else if (assessed_level == -1){
-            printf("Retrying due to unsolvable puzzle...\n");
-            continue;
-        } else {
-            printf("Level mismatch, next generation...\n");
-            continue;
-        }
+            if (total_givens > cell_bound) {
+                continue;
+            }
 
+            SolverStats stats = {0};
+            int assessed_level = assess_level(&sudoku, &stats, level);
+            if (assessed_level == level) {
+                // printf("Generated puzzle matches desired difficulty level %d.\nStats:\n", level);
+                // print_stats(&stats);
+                break;
+            } else if (assessed_level == -1) {
+                // printf("Retrying due to unsolvable puzzle...\n");
+                continue;
+            } else {
+                // printf("Level mismatch, next generation...\n");
+                continue;
+            }
+        }
+    } else {
+        while (1) {
+            // Step 1: Select a random seed puzzle for levels 3 and 4
+            const char **seed_files = (level == 3) ? level_3_seeds : level_4_seeds;
+            int seed_count = (level == 3) ? sizeof(level_3_seeds) / sizeof(level_3_seeds[0]) :
+                                            sizeof(level_4_seeds) / sizeof(level_4_seeds[0]);
+            int random_index = rand() % seed_count;
+
+            // printf("\nLoading seed puzzle: %s\n", seed_files[random_index]);
+            parse_file(&sudoku, seed_files[random_index]);
+            // print_table(&sudoku);
+
+            // Step 2: Apply random transformations
+            random_transformations(&sudoku); //NEED TO ADJUST, IT DOES NOT WORK
+            // printf("\nTransformed puzzle:\n");
+            // print_table(&sudoku);
+            SolverStats stats = {0};
+            int assessed_level = assess_level(&sudoku, &stats, level);
+            if (assessed_level == level) {
+                // printf("Generated puzzle matches desired difficulty level %d.\nStats:\n", level);
+                // print_stats(&stats);
+                break;
+            }else if (assessed_level == -1) {
+                // printf("Retrying due to unsolvable puzzle...\n");
+                // print_stats(&stats);
+                break;
+            } else {
+                // printf("Level mismatch, next generation...\n");
+                continue;
+            }
+        }
     }
-    print_table(&sudoku);
-    write_to_file(&sudoku, "test.txt");
+
+    // Save the resulting puzzle to a file
+    // print_table(&sudoku);
+    write_to_file(&sudoku, "sudoku_gen.txt");
 
     return 0;
 }
