@@ -185,7 +185,7 @@ def solve_sudoku(column) -> None:
 
     set_session_value(key="solutions", value=[])
     set_session_value(key="hints", value=[])
-    empty_folder("Solutions")
+    empty_folder("src/Solutions")
     if is_full(st.session_state.sudoku):
         return None
 
@@ -208,7 +208,7 @@ def solve_sudoku(column) -> None:
                 }"""
         ):
             if execution:
-                solutions = load_solutions(path="Solutions")
+                solutions = load_solutions(path="src/Solutions")
                 hints = load_hints(path="src/Tmp/solver_actions.log")
                 if solutions:
                     set_session_value(key="solutions", value=solutions)
@@ -419,7 +419,7 @@ if st.session_state.solutions:
                     )
 
             st.html(generate_fix_sudoku_html(solutions[sol_idx], st.session_state.sudoku))
-            with open(f"Solutions/solution{sol_idx+1}.txt") as file:
+            with open(f"src/Solutions/solution{sol_idx + 1}.txt") as file:
                 st.download_button(
                     label="Download",
                     data=file,
