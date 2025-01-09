@@ -242,7 +242,8 @@ def generate_sudoku(column) -> None:
             with st.spinner("Generating..."):
                 execution = call_exe(
                     file_name="run_generator.exe",
-                    input_file=str(st.session_state.difficulty_level)
+                    input_file=str(st.session_state.difficulty_level),
+                    timeout=15
                 )
 
             if execution:
@@ -262,7 +263,7 @@ st.markdown(
     This web page hosts a **Sudoku Solver** in the first part and a **Sudoku Generator** in the second.  
     Check out the instructions!
     
-    **P.S.** We suggest setting the browser zoom level to 100% (default). \\
+    P.S. Set the screen to light mode. You can do that from the settings in the top right corner.
     You can find the source code at this github [repo](https://github.com/ggiuliopirotta/Sudoku).
     """
 )

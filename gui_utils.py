@@ -4,20 +4,25 @@ import  streamlit as st
 import  subprocess
 
 
-def call_exe(file_name: str, input_file: str) -> bool:
+def call_exe(file_name: str, input_file: str, timeout: int=60, retries=5) -> bool:
     """
     Call an executable receiving an input file.
 
-    :param file_name:
-    :param input_file:
+    :param file_name: name of the executable
+    :param input_file: path to the input file
+    :param timeout: time limit
+    :param retries: number of retries
     :return:
     """
 
-    run_process = subprocess.run([file_name, input_file], capture_output=True, text=True)
-    if run_process.returncode != 0:
-        return False
-    else:
-        return True
+    for attempt in range(retries):
+        try:
+            run_process = subprocess.run([file_name, input_file], capture_output=True, text=True, timeout=timeout)
+            return run_process.returncode == 0
+        except subprocess.TimeoutExpired:
+            if attempt == retries - 1:
+                return False
+            continue
 
 
 def check_valid_sudoku(sudoku: np.ndarray) -> bool:
@@ -320,7 +325,6 @@ def generate_editable_sudoku_html(sudoku: np.ndarray) -> str:
                 border_style.append("border-right: 3px solid black")
 
             cell_color = get_background_color(hint1, hint2, i, j)
-            print(cell_color)
             disabled_attr = "disabled" if (st.session_state.freeze_config and
                                            st.session_state.sudoku_frz[i, j]) else ""
             cell_style = border_style + [f"background-color: {cell_color}"] if cell_color else border_style

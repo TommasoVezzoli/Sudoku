@@ -1,5 +1,5 @@
 CC=gcc
-COMMON=helpers.c io.c  solver_human.c
+COMMON=helpers.c io.c solver_human.c
 TARGETS=run_backtrack.exe run_generator.exe
 
 all: $(TARGETS)
