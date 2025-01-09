@@ -212,7 +212,7 @@ bool applyNakedSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                     printf("Error opening log file.\n");
                                     return false; // Exit if the log file cannot be opened
                                 }
-                                fprintf(logFile, "Naked Single: Placing %d in cell (%d, %d)\n\n", d, r, c);
+                                fprintf(logFile, "Naked Single: placing %d in cell (%d, %d)\n\n", d, r+1, c+1);
                                 fclose(logFile); // Close the file before returning
                             }
                             return true;
@@ -261,7 +261,7 @@ bool applyHiddenSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                         printf("Error opening log file.\n");
                         return false; // Exit if the log file cannot be opened
                     }
-                    fprintf(logFile, "Hidden Single (Row): Placing %d in cell (%d, %d)\n\n", d, r, col);
+                    fprintf(logFile, "Hidden Single (Row): placing %d in cell (%d, %d)\n\n", d, r+1, col+1);
                     fclose(logFile); // Close the file before returning
                 }
                 return true;
@@ -288,7 +288,7 @@ bool applyHiddenSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                         printf("Error opening log file.\n");
                         return false; // Exit if the log file cannot be opened
                     }
-                    fprintf(logFile, "Hidden Single (Column): Placing %d in cell (%d, %d)\n\n", d, row, c);
+                    fprintf(logFile, "Hidden Single (Column): placing %d in cell (%d, %d)\n\n", d, row+1, c+1);
                     fclose(logFile); // Close the file before returning
                 }
                 return true;
@@ -322,7 +322,7 @@ bool applyHiddenSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                             printf("Error opening log file.\n");
                             return false; // Exit if the log file cannot be opened
                         }
-                        fprintf(logFile, "Hidden Single (Box): Placing %d in cell (%d, %d)\n\n", d, row, col);
+                        fprintf(logFile, "Hidden Single (Box): placing %d in cell (%d, %d)\n\n", d, row+1, col+1);
                         fclose(logFile); // Close the file before returning
                     }
                     return true;
@@ -393,7 +393,7 @@ bool applyNakedPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                         }
                                         char candidatesStr[10];
                                         formatCandidates(candidatesStr, candidates[r][c3] & pairMask);
-                                        fprintf(logFile, "Naked pair at cells (%d, %d) and (%d, %d): removing candidates %s from cell (%d, %d)\n", r, c1, r, c2, candidatesStr, r, c3);
+                                        fprintf(logFile, "Naked pair at cells (%d, %d) and (%d, %d): removing candidates %s from cell (%d, %d)\n", r+1, c1+1, r+1, c2+1, candidatesStr, r+1, c3+1);
                                         fclose(logFile); // Close the file before returning
                                     }
                                     candidates[r][c3] &= ~pairMask;
@@ -435,7 +435,7 @@ bool applyNakedPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                         }
                                         char candidatesStr[10];
                                         formatCandidates(candidatesStr, candidates[r3][c] & pairMask);
-                                        fprintf(logFile, "Naked pair at cells (%d, %d) and (%d, %d): removing candidates %s from cell (%d, %d)\n", r1, c, r2, c, candidatesStr, r3, c);
+                                        fprintf(logFile, "Naked pair at cells (%d, %d) and (%d, %d): removing candidates %s from cell (%d, %d)\n", r1+1, c+1, r2+1, c+1, candidatesStr, r3+1, c+1);
                                         fclose(logFile); // Close the file before returning
                                     }                                
                                     candidates[r3][c] &= ~pairMask;
@@ -496,7 +496,7 @@ bool applyNakedPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                         }
                                         char candidatesStr[10];
                                         formatCandidates(candidatesStr, candidates[r][c] & pairMask);
-                                        fprintf(logFile, "Naked pair at cells (%d, %d) and (%d, %d): removing candidates %s from cell (%d, %d)\n", cells[i][0], cells[i][1], cells[j][0], cells[j][1], candidatesStr, r, c);
+                                        fprintf(logFile, "Naked pair at cells (%d, %d) and (%d, %d): removing candidates %s from cell (%d, %d)\n", cells[i][0]+1, cells[i][1]+1, cells[j][0]+1, cells[j][1]+1, candidatesStr, r+1, c+1);
                                         fclose(logFile); // Close the file before returning
                                     }                                  
                                     candidates[r][c] &= ~pairMask;
@@ -670,7 +670,7 @@ bool applyHiddenPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                 printf("Error opening log file.\n");
                                 return false; // Exit if the log file cannot be opened
                             }
-                            fprintf(logFile, "Hidden Pair: [%d, %d] in cells (%d, %d) and (%d, %d), cleared other candidates in these cells.\n\n", d1, d2, r1, c1, r2, c2);
+                            fprintf(logFile, "Hidden Pair [%d, %d] in cells (%d, %d) and (%d, %d): cleared other candidates in these cells\n\n", d1, d2, r1+1, c1+1, r2+1, c2+1);
                             fclose(logFile); // Close the file before returning
                         }
                         progress = true;
@@ -764,7 +764,7 @@ bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
                                                 }
-                                                fprintf(logFile, "Pointing Pair (Row Outside Box) at cells (%d, %d) and (%d, %d): Removed %d from cell (%d, %d)\n", r, c, otherRow, otherCol, d, r, cc);
+                                                fprintf(logFile, "Pointing Pair (Row Outside Box) at cells (%d, %d) and (%d, %d): removed candidate %d from cell (%d, %d)\n", r+1, c+1, otherRow+1, otherCol+1, d, r+1, cc+1);
                                                 fclose(logFile); // Close the file before returning
                                             }
                                         }
@@ -803,7 +803,7 @@ bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
                                                 }
-                                                fprintf(logFile, "Pointing Pair (Row Inside Box) at cells (%d, %d) and (%d, %d): Removed %d from cell (%d, %d)\n", r, c, otherRow, otherCol, d, innerR, innerC);
+                                                fprintf(logFile, "Pointing Pair (Row Inside Box) at cells (%d, %d) and (%d, %d): removed candidate %d from cell (%d, %d)\n", r+1, c+1, otherRow+1, otherCol+1, d, innerR+1, innerC+1);
                                                 fclose(logFile); // Close the file before returning
                                             }
                                         }
@@ -861,7 +861,7 @@ bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
                                                 }
-                                                fprintf(logFile, "Pointing Pair (Col Outside Box) at cells (%d, %d) and (%d, %d): Removed %d from cell (%d, %d)\n", r, c, otherRow, otherCol, d, rr, c);
+                                                fprintf(logFile, "Pointing Pair (Col Outside Box) at cells (%d, %d) and (%d, %d): removed candidate %d from cell (%d, %d)\n", r+1, c+1, otherRow+1, otherCol+1, d, rr+1, c+1);
                                                 fclose(logFile); // Close the file before returning
                                             }
                                         }
@@ -898,7 +898,7 @@ bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
                                                 }
-                                                fprintf(logFile,"Pointing Pair (Col Inside Box) at cells (%d, %d) and (%d, %d): Removed %d from cell (%d, %d)\n", r, c, otherRow, otherCol, d, innerR, innerC);
+                                                fprintf(logFile,"Pointing Pair (Col Inside Box) at cells (%d, %d) and (%d, %d): removed candidate %d from cell (%d, %d)\n", r+1, c+1, otherRow+1, otherCol+1, d, innerR+1, innerC+1);
                                                 fclose(logFile); // Close the file before returning
                                             }
                                         }
@@ -989,7 +989,7 @@ bool applyNakedTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                                     }
                                                     char candidatesStr[10];
                                                     formatCandidates(candidatesStr, candidates[r][c] & tripleMask);
-                                                    fprintf(logFile, "Naked triple at cells (%d, %d), (%d, %d) and (%d, %d): removing candidates %s from cell (%d, %d)\n", r, c1, r, c2, r, c3, candidatesStr, r, c);
+                                                    fprintf(logFile, "Naked triple at cells (%d, %d), (%d, %d) and (%d, %d): removing candidates %s from cell (%d, %d)\n", r+1, c1+1, r+1, c2+1, r+1, c3+1, candidatesStr, r+1, c+1);
                                                     fclose(logFile); // Close the file before returning
                                                 }   
 
@@ -1038,7 +1038,7 @@ bool applyNakedTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                                     }
                                                     char candidatesStr[10];
                                                     formatCandidates(candidatesStr, candidates[r][c] & tripleMask);
-                                                    fprintf(logFile, "Naked triple at cells (%d, %d), (%d, %d) and (%d, %d): removing candidates %s from cell (%d, %d)\n", r1, c, r2, c, r3, c, candidatesStr, r, c);
+                                                    fprintf(logFile, "Naked triple at cells (%d, %d), (%d, %d) and (%d, %d): removing candidates %s from cell (%d, %d)\n", r1+1, c+1, r2+1, c+1, r3+1, c+1, candidatesStr, r+1, c+1);
                                                     fclose(logFile); // Close the file before returning
                                                 }   
 
@@ -1106,7 +1106,7 @@ bool applyNakedTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                             char candidatesStr[10];
                                             formatCandidates(candidatesStr, candidates[r][c] & tripleMask);
                                             fprintf(logFile, "Naked triple at cells (%d, %d), (%d, %d) and (%d, %d): removing candidates %s from cell (%d, %d)\n", 
-                                                        cells[i][0], cells[i][1], cells[j][0], cells[j][1], cells[k][0], cells[k][1], candidatesStr, r, c);
+                                                        cells[i][0]+1, cells[i][1]+1, cells[j][0]+1, cells[j][1]+1, cells[k][0]+1, cells[k][1]+1, candidatesStr, r+1, c+1);
                                             fclose(logFile); // Close the file before returning
                                         }
 
@@ -1269,7 +1269,7 @@ bool applyHiddenTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
                                         printf("Error opening log file.\n");
                                         return false; // Exit if the log file cannot be opened
                                     }
-                                    fprintf(logFile,"Hidden Triple: [%d, %d, %d] in cells (%d, %d), (%d, %d) and (%d, %d), Cleared other candidates\n", d1, d2, d3, r1, c1, r2, c2, r3, c3);
+                                    fprintf(logFile,"Hidden Triple [%d, %d, %d] in cells (%d, %d), (%d, %d) and (%d, %d): cleared other candidates\n", d1, d2, d3, r1+1, c1+1, r2+1, c2+1, r3+1, c3+1);
                                     fprintf(logFile,"\n");
                                     fclose(logFile); // Close the file before returning
                                 }
@@ -1398,7 +1398,7 @@ bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode)
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
                                                 }
-                                                fprintf(logFile,"Pointing Triple (Outside Box) at cells (%d, %d), (%d, %d) and (%d, %d): Removed %d from cell (%d, %d)\n", r, c, otherRow1, otherCol1, otherRow2, otherCol2, d, r, cc);
+                                                fprintf(logFile,"Pointing Triple (Outside Box) at cells (%d, %d), (%d, %d) and (%d, %d): removed candidate %d from cell (%d, %d)\n", r+1, c+1, otherRow1+1, otherCol1+1, otherRow2+1, otherCol2+1, d, r+1, cc+1);
                                                 fclose(logFile); // Close the file before returning
                                             }
                                         }
@@ -1423,7 +1423,7 @@ bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode)
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
                                                 }
-                                                fprintf(logFile,"Pointing Triple (Outside Box) at cells (%d, %d), (%d, %d) and (%d, %d): Removed %d from cell (%d, %d)\n", r, c, otherRow1, otherCol1, otherRow2, otherCol2, d, rr, c);
+                                                fprintf(logFile,"Pointing Triple (Outside Box) at cells (%d, %d), (%d, %d) and (%d, %d): removed candidate %d from cell (%d, %d)\n", r+1, c+1, otherRow1+1, otherCol1+1, otherRow2+1, otherCol2+1, d, rr+1, c+1);
                                                 fclose(logFile); // Close the file before returning
                                             }
                                         }
@@ -1475,7 +1475,7 @@ bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode)
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
                                                 }
-                                                fprintf(logFile,"Pointing Triple (Inside Box) at cells (%d, %d), (%d, %d) and (%d, %d): Removed %d from cell (%d, %d)\n", r, c, otherRow1, otherCol1, otherRow2, otherCol2, d, innerR, innerC);
+                                                fprintf(logFile,"Pointing Triple (Inside Box) at cells (%d, %d), (%d, %d) and (%d, %d): removed candidate %d from cell (%d, %d)\n", r+1, c+1, otherRow1+1, otherCol1+1, otherRow2+1, otherCol2+1, d, innerR+1, innerC+1);
                                                 fclose(logFile); // Close the file before returning
                                             }
                                         }
@@ -1489,7 +1489,7 @@ bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode)
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
                                                 }
-                                                fprintf(logFile,"Pointing Triple (Inside Box) at cells (%d, %d), (%d, %d) and (%d, %d): Removed %d from cell (%d, %d)\n", r, c, otherRow1, otherCol1, otherRow2, otherCol2, d, innerR, innerC);
+                                                fprintf(logFile,"Pointing Triple (Inside Box) at cells (%d, %d), (%d, %d) and (%d, %d): removed candidate %d from cell (%d, %d)\n", r+1, c+1, otherRow1+1, otherCol1+1, otherRow2+1, otherCol2+1, d, innerR+1, innerC+1);
                                                 fclose(logFile); // Close the file before returning
                                             }
                                         }

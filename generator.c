@@ -8,7 +8,12 @@
 #include <time.h>
 #include <string.h>
 
-
+// Define path separator for cross-platform compatibility
+#ifdef _WIN32
+#define PATH_SEPARATOR "\\"
+#else
+#define PATH_SEPARATOR "/"
+#endif
 #define N_STARTING_PIVOTS 11
 #define N_SOL 5
 #define TIMEOUT_SECONDS 1
@@ -252,10 +257,10 @@ void random_transformations(Sudoku *sudoku) {
  * Returns:
  * - The total number of solutions found so far. If the timeout is exceeded, returns the current count.
  */
-int count_solutions_recursive(Sudoku *sudoku, int *n_solutions, int *trials, clock_t start_time) {
+int count_solutions_recursive(Sudoku *sudoku, int *n_solutions, int *trials, time_t start_time) {
     int row, col;
 
-    clock_t current_time = clock();
+    time_t current_time = time(NULL);
     double elapsed_time = ((double)(current_time - start_time)) / CLOCKS_PER_SEC;
     if (elapsed_time > TIMEOUT_SECONDS) {
         // printf("\nTimeout exceeded during grid generation!\n");
@@ -293,7 +298,7 @@ int count_solutions_recursive(Sudoku *sudoku, int *n_solutions, int *trials, clo
  * Returns:
  * - The total number of solutions for the Sudoku grid. If the timeout is exceeded, the count may be incomplete.
  */
-int count_solutions(Sudoku *sudoku, clock_t start_time) {
+int count_solutions(Sudoku *sudoku, time_t start_time) {
     int n_solutions = 0;
     int trials = 0;  // Initialize the trial counter
     return count_solutions_recursive(sudoku, &n_solutions, &trials, start_time);
@@ -320,11 +325,11 @@ int count_solutions(Sudoku *sudoku, clock_t start_time) {
 bool solve_sudoku(
     Sudoku *sudoku,
     int *n_solutions,
-    clock_t start_time
+    time_t start_time
 ) {
     int row, col;
 
-    clock_t current_time = clock();
+    time_t current_time = time(NULL);
     double elapsed_time = ((double)(current_time - start_time)) / CLOCKS_PER_SEC;
     if (elapsed_time > TIMEOUT_SECONDS) {
         // printf("\nTimeout exceeded during grid generation!\n");
@@ -371,12 +376,12 @@ bool solve_sudoku(
  */
 bool generate_valid_grid(Sudoku *sudoku) {
 
-    clock_t start_time = clock(); // Record the start time
+    time_t start_time = time(NULL); // Record the start time
 
     while (true) {
 
         // Check timeout
-        clock_t current_time = clock();
+        time_t current_time = time(NULL);
         double elapsed_time = ((double)(current_time - start_time)) / CLOCKS_PER_SEC;
         if (elapsed_time > TIMEOUT_SECONDS) {
             // printf("\nTimeout exceeded during grid generation!\n");
@@ -394,6 +399,7 @@ bool generate_valid_grid(Sudoku *sudoku) {
         }
         // Terminate if the puzzle has a solution
         int n_solutions = 0;
+
         if (solve_sudoku(sudoku, &n_solutions, start_time)) {
             return true;
         }
@@ -485,11 +491,11 @@ int sample_cells_bound(int level) {
  */
 void dynamic_dig(Sudoku *sudoku, int level, int cell_bound) {
     int total_givens = 81;
-    clock_t start_time = clock();
+    time_t start_time = time(NULL);
     bool solving_mode = false;
 
     while (total_givens > cell_bound) {
-        clock_t current_time = clock();
+        time_t current_time = time(NULL);
         double elapsed_time = ((double)(current_time - start_time)) / CLOCKS_PER_SEC;
         if (elapsed_time > TIMEOUT_SECONDS) {
             // printf("Timeout during digging!\n");
@@ -507,7 +513,7 @@ void dynamic_dig(Sudoku *sudoku, int level, int cell_bound) {
         Sudoku temp_sudoku;
         memcpy(&temp_sudoku, sudoku, sizeof(Sudoku));
 
-        if (!solve_human(&temp_sudoku, &temp_stats, solving_mode) || count_solutions(sudoku, clock()) != 1) {
+        if (!solve_human(&temp_sudoku, &temp_stats, solving_mode) || count_solutions(sudoku, time(NULL)) != 1) {
             sudoku->table[row][col] = backup; // Restore if unsolvable or not unique
             continue;
         }
@@ -555,7 +561,7 @@ int assess_level(Sudoku *sudoku, SolverStats *stats, int input_level) {
 
     // Flags for technique levels
     bool requires_level_1 = stats->naked_single > 0 || stats->hidden_single > 0;
-    bool requires_level_2 = ((stats->naked_pair + stats->hidden_pair + stats->pointing_pair) > 1);
+    bool requires_level_2 = ((stats->naked_pair + stats->hidden_pair + stats->pointing_pair) > 0);
     bool requires_level_3 = ((stats->naked_triple + stats->pointing_triple + stats->hidden_triple) > 0);
     bool requires_level_4 = stats->x_wing > 0;
 
@@ -633,6 +639,9 @@ int main(int argc, char *argv[]) {
 
     Sudoku sudoku;
     SolverStats stats = {0};
+
+    memset(sudoku.table, 0, sizeof(sudoku.table));  // Set all elements to 0
+
     int level = atoi(argv[1]);
     // printf("\nEnter the level desired (1-4): ");
     // if (scanf("%d", &level) != 1) { // Validate input
@@ -693,14 +702,13 @@ int main(int argc, char *argv[]) {
     } else {
         while (1) {
             // Step 1: Select a random seed puzzle for levels 3 and 4
-            const char **seed_files = (level == 3) ? level_3_seeds : level_4_seeds;
+            const char** seed_files = (level == 3) ? level_3_seeds : level_4_seeds;
             int seed_count = (level == 3) ? sizeof(level_3_seeds) / sizeof(level_3_seeds[0]) :
                                             sizeof(level_4_seeds) / sizeof(level_4_seeds[0]);
             int random_index = rand() % seed_count;
 
             // printf("\nLoading seed puzzle: %s\n", seed_files[random_index]);
             parse_file(&sudoku, seed_files[random_index]);
-            // print_table(&sudoku);
 
             // Step 2: Apply random transformations
             random_transformations(&sudoku); //NEED TO ADJUST, IT DOES NOT WORK
