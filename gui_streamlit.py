@@ -193,11 +193,11 @@ def solve_sudoku(column) -> None:
         with st.spinner("Solving..."):
             save_sudoku_puzzle(
                 sudoku=st.session_state.sudoku,
-                file_path="sudoku_tmp.txt"
+                file_path="src/Tmp/sudoku_tmp.txt"
             )
             execution = call_exe(
                 file_name="run_backtrack.exe",
-                input_file="sudoku_tmp.txt"
+                input_file="src/Tmp/sudoku_tmp.txt"
             )
 
         with stylable_container(
@@ -209,7 +209,7 @@ def solve_sudoku(column) -> None:
         ):
             if execution:
                 solutions = load_solutions(path="Solutions")
-                hints = load_hints(path="solver_actions.log")
+                hints = load_hints(path="src/Tmp/solver_actions.log")
                 if solutions:
                     set_session_value(key="solutions", value=solutions)
                     set_session_value(key="hints", value=hints)
@@ -247,7 +247,7 @@ def generate_sudoku(column) -> None:
                 )
 
             if execution:
-                sudoku_gen = load_sudoku_board(file_path="sudoku_gen.txt")
+                sudoku_gen = load_sudoku_board(file_path="src/Tmp/sudoku_gen.txt")
                 set_session_value(key="sudoku_gen", value=sudoku_gen)
                 st.success("Sudoku generated successfully.")
 
@@ -282,7 +282,7 @@ st.markdown(
     When the **Solve** button is pressed, a popup window with the solutions will appear.
     
     Here is a recap of the main functionalities in this section:
-    - Upload a puzzle from a text file like [this](https://github.com/ggiuliopirotta/Sudoku/blob/main/test.txt)
+    - Upload a puzzle from a text file like [this](https://github.com/ggiuliopirotta/Sudoku/blob/main/sample-file.txt)
     - Freeze the non-empty cells of the grid to avoid messing up the current configuration
     - Check if the grid is valid
     - Solve the sudoku
@@ -528,7 +528,7 @@ if np.any(st.session_state.sudoku_gen):
             on_click=import_sudoku
         )
     with cols[1]:
-        with open(f"sudoku_gen.txt") as file:
+        with open(f"src/Tmp/sudoku_gen.txt") as file:
             st.download_button(
                 label="Download",
                 data=file,
