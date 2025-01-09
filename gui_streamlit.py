@@ -49,7 +49,7 @@ def handle_file_upload(column) -> None:
             ):
                 try:
                     cwd = os.getcwd()
-                    file_path = os.path.join(cwd, "sudoku_tmp.txt")
+                    file_path = os.path.join(cwd, "src/Tmp/sudoku_tmp.txt")
                     with open(file_path, "wb") as f:
                         f.write(file.getbuffer())
 
@@ -261,10 +261,10 @@ st.markdown("<h1 style='text-align: center; font-weight: bold;'>Sudoku Solver & 
 st.markdown(
     """
     This web page hosts a **Sudoku Solver** in the first part and a **Sudoku Generator** in the second.  
-    Check out the instructions!
-    
-    P.S. Set the screen to light mode. You can do that from the settings in the top right corner.
     You can find the source code at this github [repo](https://github.com/ggiuliopirotta/Sudoku).
+    
+    P.S. We recommend setting the screen to light mode for better visibility.  
+    You can do that from the app settings in the top right corner.
     """
 )
 
@@ -277,7 +277,7 @@ st.write("---")
 
 st.markdown(
     """
-    #### Solver
+    ### Solver
     This tool is able to solve any sudoku puzzle, whether it holds a single solution or multiple ones: in such case just the five that are most similar to each other are loaded. \\
     When the **Solve** button is pressed, a popup window with the solutions will appear.
     
@@ -286,8 +286,13 @@ st.markdown(
     - Freeze the non-empty cells of the grid to avoid messing up the current configuration
     - Check if the grid is valid
     - Solve the sudoku
+    - Follow the hints that will guide you to the solution
     
     For the other features, read the tooltip hovering over with the mouse.
+    
+    ##### Important remark
+    When you want to fill in the Sudoku grid cells, after inputting the desired numbers, you need to manually copy the values in the text area below the grid and paste them into the text area on the right.  
+    Then, click the **Update** button.
     """
 )
 
@@ -362,6 +367,7 @@ cols = st.columns((1, 1, 7), vertical_alignment="center")
 with cols[0]:
     st.button(
         label="Check",
+        help="Check if the current sudoku puzzle is valid",
         use_container_width=True,
         on_click=check_solution,
         args=(cols[2],)
@@ -431,17 +437,19 @@ if st.session_state.solutions:
             key="highlight_correct",
             label="Highlight correct cells",
             help="""Color the grid cells according to the following rules: \\
-                - white if the number is incorrect \\
                 - yellow if the number is correct in at least one of the loaded solutions \\
                 - green if any of these situations occur: \\
                     i. the number appears in the solution where most of the numbers are correct \\
-                    ii. the number is correct
+                    ii. the number is correct \\
+                - white if the number is incorrect \\
+                If the changes are not visible, reload the page with the button on the right.
             """,
             value=st.session_state.highlight_correct
         )
     with cols[2]:
         if st.button(
             label="Reload",
+            help="Reload the page to apply any changes",
             use_container_width=True,
         ):
             st.rerun()
@@ -492,7 +500,7 @@ st.write("---")
 
 st.markdown(
     """
-    #### Generator
+    ### Generator
     
     This tool can generate sudoku of four different levels. \\
     To use it, just insert the desired difficulty (from 1: easy, to 4: hard) and click the **Generate** button.

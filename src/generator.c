@@ -1,6 +1,6 @@
 #include "helpers.h"
 #include "io.h"
-#include "human_solver.h"
+#include "solver_human.h"
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -8,12 +8,7 @@
 #include <time.h>
 #include <string.h>
 
-// Define path separator for cross-platform compatibility
-#ifdef _WIN32
-#define PATH_SEPARATOR "\\"
-#else
-#define PATH_SEPARATOR "/"
-#endif
+
 #define N_STARTING_PIVOTS 11
 #define N_SOL 5
 #define TIMEOUT_SECONDS 1
@@ -590,24 +585,24 @@ int assess_level(Sudoku *sudoku, SolverStats *stats, int input_level) {
 
 // Array of known seed filenames for level 3 and level 4
 const char *level_3_seeds[] = {
-    "seeds/level3/puzzle1.txt",
-    "seeds/level3/puzzle2.txt",
-    "seeds/level3/puzzle3.txt",
-    "seeds/level3/puzzle4.txt",
-    "seeds/level3/puzzle5.txt",
-    "seeds/level3/puzzle6.txt",
-    "seeds/level3/puzzle7.txt",
-    "seeds/level3/puzzle8.txt",
-    "seeds/level3/puzzle9.txt",
-    "seeds/level3/puzzle10.txt"
+    "src/Seeds/level3/puzzle1.txt",
+    "src/Seeds/level3/puzzle2.txt",
+    "src/Seeds/level3/puzzle3.txt",
+    "src/Seeds/level3/puzzle4.txt",
+    "src/Seeds/level3/puzzle5.txt",
+    "src/Seeds/level3/puzzle6.txt",
+    "src/Seeds/level3/puzzle7.txt",
+    "src/Seeds/level3/puzzle8.txt",
+    "src/Seeds/level3/puzzle9.txt",
+    "src/Seeds/level3/puzzle10.txt"
 };
 
 const char *level_4_seeds[] = {
-    "seeds/level4/puzzle1.txt",
-    "seeds/level4/puzzle2.txt",
-    "seeds/level4/puzzle3.txt",
-    "seeds/level4/puzzle4.txt",
-    "seeds/level4/puzzle5.txt"
+    "src/Seeds/level4/puzzle1.txt",
+    "src/Seeds/level4/puzzle2.txt",
+    "src/Seeds/level4/puzzle3.txt",
+    "src/Seeds/level4/puzzle4.txt",
+    "src/Seeds/level4/puzzle5.txt"
 };
 
 /**
@@ -733,7 +728,7 @@ int main(int argc, char *argv[]) {
 
     // Save the resulting puzzle to a file
     // print_table(&sudoku);
-    write_to_file(&sudoku, "sudoku_gen.txt");
+    write_to_file(&sudoku, "src/Tmp/sudoku_gen.txt");
 
     return 0;
 }

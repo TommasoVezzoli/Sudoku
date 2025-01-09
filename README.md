@@ -13,6 +13,43 @@ Detailed instructions on how to use the application are provided in the applicat
 
 ---
 
+### Folder structure
+
+This is the folder structure of the project:
+
+```
+Sudoku/
+├── .git/
+├── .idea/
+├── .streamlit/
+│   └── config.toml
+├── src/
+│   ├── generator.c
+│   ├── helpers.c
+│   ├── helpers.h
+│   ├── io.c
+│   ├── io.h
+│   ├── solver_backtrack.c
+│   ├── solver_human.c
+│   ├── solver_human.h
+│   ├── Seeds/
+│   │   ├── level3/
+│   │   │   ├── puzzle1.txt
+│   │   │   └── ...
+│   │   └── level4/
+│   │       ├── puzzle1.txt
+│   │       └── ...
+│   ├── Solutions/
+│   └── Tmp/
+├── __pycache__/s
+├── Makefile
+└── README.md
+```
+
+All files and functions are carefully documented to make the code easy to understand and maintain.
+
+---
+
 ### Usage
 Follow these steps to make the application work on your local machine:
 
@@ -32,6 +69,8 @@ Start the application by running the following command:
 ```
 streamlit run gui_streamlit.py
 ```
+
+---
 
 ### Next steps
 - [ ] Solve and generate non 9x9 Sudoku puzzles

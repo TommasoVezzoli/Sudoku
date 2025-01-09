@@ -1,6 +1,6 @@
 #include "helpers.h"
 #include "io.h"
-#include "human_solver.h"
+#include "solver_human.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -36,7 +36,7 @@ bool solve_sudoku(
     if (!find_empty(sudoku, &row, &col)) {
         (*n_solutions)++;
         char filename[256];
-        snprintf(filename, sizeof(filename), "Solutions/solution%d.txt", *n_solutions);
+        snprintf(filename, sizeof(filename), "src/Solutions/solution%d.txt", *n_solutions);
         write_to_file(sudoku, filename);
         
         if (*n_solutions == N_SOL) {
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
                 if (!is_valid(&sudoku, num, row, col)) {
                     sudoku.table[row][col] = num;
                     printf("Invalid Sudoku\n");
-                    write_to_file(&sudoku, "sudoku_solution.txt");
+//                    write_to_file(&sudoku, "sudoku_solution.txt");
                     return 0;
                 }
                 sudoku.table[row][col] = num;
