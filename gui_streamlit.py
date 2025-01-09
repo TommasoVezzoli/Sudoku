@@ -1,5 +1,6 @@
 import  numpy as np
 from    gui_utils import *
+import  json
 import  os
 from    streamlit_extras.stylable_container import stylable_container
 import  streamlit as st
@@ -14,9 +15,9 @@ if "init" not in st.session_state:
     st.session_state.sudoku             = np.zeros((9, 9), dtype=int)
     st.session_state.sudoku_frz         = np.zeros((9, 9), dtype=bool)
     st.session_state.sudoku_gen         = np.zeros((9, 9), dtype=int)
+    st.session_state.tmp_values         = ""
     st.session_state.freeze_config      = False
     st.session_state.highlight_correct  = False
-    st.session_state.hide_invalid       = False
     st.session_state.solutions          = []
     st.session_state.sol_idx            = 0
     st.session_state.hints              = []
@@ -39,7 +40,7 @@ def handle_file_upload(column) -> None:
     if file:
         with column:
             with stylable_container(
-                key="results",
+                key="upload",
                 css_styles="""
                 .stAlert{
                     text-align: center
@@ -56,7 +57,7 @@ def handle_file_upload(column) -> None:
                     if sudoku is not None:
                         set_session_value(key="solutions", value=[])
                         set_session_value(key="sudoku", value=sudoku)
-                        set_session_value(key="freeze_config", value=True)
+                        # set_session_value(key="freeze_config", value=True)
                         set_freeze_mask()
                         st.success("File loaded correctly.")
                     else:
@@ -76,7 +77,7 @@ def check_solution(column) -> None:
     sudoku = st.session_state.sudoku
     with column:
         with stylable_container(
-                key="results",
+                key="check",
                 css_styles="""
                 .stAlert{
                     text-align: center
@@ -118,59 +119,59 @@ def input_number(row: int, col: int) -> None:
             st.rerun()
 
 
-def print_sudoku_block(block_idx: int, n_rows: int=3) -> None:
-    """
-    Generate and display a block of the sudoku puzzle.
-    The first 2 blocks are closed with a white space to simulate the separation between blocks.
-
-    :param block_idx: block index
-    :param n_rows: number of rows to display
-    :return: None
-    """
-
-    _, c, _ = st.columns((5, 10, 5))
-    grid = c.columns((7, 7, 7, 3.5, 7, 7, 7, 3.5, 7, 7, 7, 1))
-
-    if st.session_state.solutions and st.session_state.highlight_correct:
-        hint1, hint2 = get_hint_masks(sudoku=st.session_state.sudoku, solutions=st.session_state.solutions)
-    else:
-        hint1 = np.zeros((9, 9), dtype=bool)
-        hint2 = np.zeros((9, 9), dtype=bool)
-
-    for row in range(3*block_idx, 3*block_idx+n_rows):
-        for col in range(11):
-            with grid[col]:
-                if col in (3, 7):
-                    continue
-
-                map_col = map_board_column(col)
-                num = st.session_state.sudoku[row, map_col]
-                text = str(num) if num != 0 else "_"
-
-                background_color = get_background_color(hint1, hint2, row, map_col)
-                margin_top = "0rem" if row%3 == 0 else "-1rem"
-                margin_bottom = "0rem" if (row-2)%3 == 0 else "-1rem"
-
-                with stylable_container(
-                    key=f"sudoku_{row}{col}",
-                    css_styles=f"""
-                        button {{
-                            font-size: 1rem;
-                            font-weight: bold;
-                            background-color: {background_color};
-                            color: black;
-                            margin-top: {margin_top};
-                            margin-bottom: {margin_bottom};
-                        }}
-                    """
-                ):
-                    st.button(
-                        key=f"sudoku_{row}{col}",
-                        label=text,
-                        disabled=st.session_state.freeze_config and st.session_state.sudoku_frz[row, map_board_column(col)],
-                        on_click=input_number,
-                        args=(row, col)
-                    )
+# def print_sudoku_block(block_idx: int, n_rows: int=3) -> None:
+#     """
+#     Generate and display a block of the sudoku puzzle.
+#     The first 2 blocks are closed with a white space to simulate the separation between blocks.
+#
+#     :param block_idx: block index
+#     :param n_rows: number of rows to display
+#     :return: None
+#     """
+#
+#     _, c, _ = st.columns((5, 10, 5))
+#     grid = c.columns((7, 7, 7, 3.5, 7, 7, 7, 3.5, 7, 7, 7, 1))
+#
+#     if st.session_state.solutions and st.session_state.highlight_correct:
+#         hint1, hint2 = get_hint_masks(sudoku=st.session_state.sudoku, solutions=st.session_state.solutions)
+#     else:
+#         hint1 = np.zeros((9, 9), dtype=bool)
+#         hint2 = np.zeros((9, 9), dtype=bool)
+#
+#     for row in range(3*block_idx, 3*block_idx+n_rows):
+#         for col in range(11):
+#             with grid[col]:
+#                 if col in (3, 7):
+#                     continue
+#
+#                 map_col = map_board_column(col)
+#                 num = st.session_state.sudoku[row, map_col]
+#                 text = str(num) if num != 0 else "_"
+#
+#                 background_color = get_background_color(hint1, hint2, row, map_col)
+#                 margin_top = "0rem" if row%3 == 0 else "-1rem"
+#                 margin_bottom = "0rem" if (row-2)%3 == 0 else "-1rem"
+#
+#                 with stylable_container(
+#                     key=f"sudoku_{row}{col}",
+#                     css_styles=f"""
+#                         button {{
+#                             font-size: 1rem;
+#                             font-weight: bold;
+#                             background-color: {background_color};
+#                             color: black;
+#                             margin-top: {margin_top};
+#                             margin-bottom: {margin_bottom};
+#                         }}
+#                     """
+#                 ):
+#                     st.button(
+#                         key=f"sudoku_{row}{col}",
+#                         label=text,
+#                         disabled=st.session_state.freeze_config and st.session_state.sudoku_frz[row, map_board_column(col)],
+#                         on_click=input_number,
+#                         args=(row, col)
+#                     )
 
 
 def solve_sudoku(column) -> None:
@@ -200,7 +201,7 @@ def solve_sudoku(column) -> None:
             )
 
         with stylable_container(
-                key="results",
+                key="solve",
                 css_styles="""
                 .stAlert{
                     text-align: center
@@ -226,23 +227,28 @@ def generate_sudoku(column) -> None:
     :return: None
     """
 
-    clear()
-
     with column:
-        if st.session_state.difficulty_level is None:
-            st.error("Please select a difficulty level.")
-            return None
+        with stylable_container(
+                key="generate",
+                css_styles="""
+                        .stAlert{
+                            text-align: center
+                        }"""
+        ):
+            if st.session_state.difficulty_level is None:
+                st.error("Please select a difficulty level.")
+                return None
 
-        with st.spinner("Generating..."):
-            execution = call_exe(
-                file_name="run_generator.exe",
-                input_file="4"
-            )
+            with st.spinner("Generating..."):
+                execution = call_exe(
+                    file_name="run_generator.exe",
+                    input_file=str(st.session_state.difficulty_level)
+                )
 
-        if execution:
-            sudoku_gen = load_sudoku_board(file_path="sudoku_gen.txt")
-            set_session_value(key="sudoku_gen", value=sudoku_gen)
-            st.success("Sudoku generated successfully.")
+            if execution:
+                sudoku_gen = load_sudoku_board(file_path="sudoku_gen.txt")
+                set_session_value(key="sudoku_gen", value=sudoku_gen)
+                st.success("Sudoku generated successfully.")
 
 
 ### ---------------------------------------------------------------------------------------------------- ###
@@ -275,7 +281,7 @@ st.markdown(
     When the **Solve** button is pressed, a popup window with the solutions will appear.
     
     Here is a recap of the main functionalities in this section:
-    - Upload a puzzle from a text file like this
+    - Upload a puzzle from a text file like [this](https://github.com/ggiuliopirotta/Sudoku/blob/main/test.txt)
     - Freeze the non-empty cells of the grid to avoid messing up the current configuration
     - Check if the grid is valid
     - Solve the sudoku
@@ -310,15 +316,46 @@ with cols[1]:
         on_change=set_freeze_mask,
     )
 
-for block_idx in range(3):
-    print_sudoku_block(block_idx=block_idx)
+# for block_idx in range(3):
+#     print_sudoku_block(block_idx=block_idx)
 
-valid_inputs = st.checkbox(
-    key="hide_invalid",
-    label="Hide invalid numbers",
-    help="Remove the numbers that cannot be placed into the selected cell from the list in the dialog.",
-    value=st.session_state.hide_invalid
-)
+cols = st.columns([3, 2])
+with cols[0]:
+    grid_html = generate_editable_sudoku_html(st.session_state.sudoku)
+    st.components.v1.html(grid_html, height=400)
+
+with cols[1]:
+    st.markdown("")
+    with st.expander("Confirm grid values", expanded=True):
+        tmp_values = st.text_area(
+            "Grid Values",
+            st.session_state.tmp_values,
+            height=100,
+            label_visibility="collapsed"
+        )
+        if st.button("Update"):
+            with stylable_container(
+                    key="update",
+                    css_styles="""
+                            .stAlert{
+                                text-align: center
+                            }
+                            """
+            ):
+                try:
+                    if tmp_values:
+                        updates = json.loads(tmp_values)
+                        for pos, value in updates.items():
+                            row, col = map(int, pos.split(","))
+                            st.session_state.sudoku[row, col] = int(value)
+                        st.success("Grid updated successfully!")
+                        st.rerun()
+                    else:
+                        st.warning("No values to update.")
+                except json.JSONDecodeError:
+                    st.error("Invalid grid values format.")
+                except Exception as e:
+                    st.error(f"Error updating the grid")
 
 cols = st.columns((1, 1, 7), vertical_alignment="center")
 with cols[0]:
@@ -342,7 +379,7 @@ with cols[1]:
 
 
 if st.session_state.solutions:
-    cols = st.columns((4, 8), vertical_alignment="center")
+    cols = st.columns((4, 5, 2, 2), vertical_alignment="center")
 
     with cols[0]:
         with st.popover(
@@ -380,7 +417,7 @@ if st.session_state.solutions:
                         args=("sol_idx", sol_idx+1)
                     )
 
-            st.html(generate_sudoku_html(solutions[sol_idx], st.session_state.sudoku))
+            st.html(generate_fix_sudoku_html(solutions[sol_idx], st.session_state.sudoku))
             with open(f"Solutions/solution{sol_idx+1}.txt") as file:
                 st.download_button(
                     label="Download",
@@ -389,18 +426,25 @@ if st.session_state.solutions:
                 )
 
     with cols[1]:
-            st.checkbox(
-                key="highlight_correct",
-                label="Highlight correct cells",
-                help="""Color the grid cells according to the following rules: \\
-                    - white if the number is incorrect \\
-                    - yellow if the number is correct in at least one of the loaded solutions \\
-                    - green if any of these situations occur: \\
-                        i. the number appears in the solution where most of the numbers are correct \\
-                        ii. the number is correct
-                """,
-                value=st.session_state.highlight_correct
-            )
+        st.checkbox(
+            key="highlight_correct",
+            label="Highlight correct cells",
+            help="""Color the grid cells according to the following rules: \\
+                - white if the number is incorrect \\
+                - yellow if the number is correct in at least one of the loaded solutions \\
+                - green if any of these situations occur: \\
+                    i. the number appears in the solution where most of the numbers are correct \\
+                    ii. the number is correct
+            """,
+            value=st.session_state.highlight_correct
+        )
+    with cols[2]:
+        if st.button(
+            label="Reload",
+            use_container_width=True,
+        ):
+            st.rerun()
+
     if st.session_state.hints:
         with st.popover(
                 label="Show hints",
@@ -472,7 +516,7 @@ with cols[1]:
     )
 
 if np.any(st.session_state.sudoku_gen):
-    st.html(generate_sudoku_html(st.session_state.sudoku_gen))
+    st.html(generate_fix_sudoku_html(st.session_state.sudoku_gen))
 
     cols = st.columns((1, 1.5, 6))
     with cols[0]:
@@ -480,11 +524,9 @@ if np.any(st.session_state.sudoku_gen):
             label="Import",
             help="Import the sudoku in the above solver section to solve it.",
             use_container_width=True,
-            on_click=set_session_value,
-            args=("sudoku", st.session_state.sudoku_gen)
+            on_click=import_sudoku
         )
     with cols[1]:
-        # TODO: replace the file path with the correct one
         with open(f"sudoku_gen.txt") as file:
             st.download_button(
                 label="Download",

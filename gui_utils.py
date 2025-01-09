@@ -72,7 +72,7 @@ def empty_folder(path: str) -> None:
         if os.path.isfile(file_path):
             os.remove(file_path)
 
-def generate_sudoku_html(sudoku: np.ndarray, comparison :np.ndarray=None) -> None:
+def generate_fix_sudoku_html(sudoku: np.ndarray, comparison :np.ndarray=None) -> None:
     """
     Generate a html representation of a sudoku puzzle.
     If a comparison is provided, the cells are colored according to whether the value is the same or differs.
@@ -129,173 +129,231 @@ def generate_sudoku_html(sudoku: np.ndarray, comparison :np.ndarray=None) -> Non
     return html
 
 
-# def generate_sudoku_html_v1(sudoku: np.ndarray, comparison: np.ndarray = None, mode: str="edit") -> str:
-#     """
-#     Generate the HTML representation of a sudoku puzzle with editable cells.
-#     If a comparison is provided, the cells are colored according to whether the value is the same or differs.
-#
-#     :param sudoku: Sudoku puzzle
-#     :param comparison: Comparison for the Sudoku puzzle
-#     :param mode: Mode of the table (edit or fix)
-#
-#     :return: HTML string
-#     """
-#
-#     table_header = """
-#         <style>
-#             table {
-#                 border-collapse: collapse;
-#                 font-family: Calibri, sans-serif;
-#             }
-#             tbody {
-#                 border: solid medium;
-#             }
-#             td {
-#                 border: solid thin;
-#                 height: 2em;
-#                 width: 2em;
-#                 text-align: center;
-#                 padding: 0;
-#             }
-#             input {
-#                 width: 100%;
-#                 height: 100%;
-#                 border: none;
-#                 text-align: center;
-#                 font-size: 16px;
-#                 font-family: Calibri, sans-serif;
-#             }
-#         </style>
-#         <table>
-#             <col><col><col>
-#             <col><col><col>
-#             <col><col><col>
-#     """
-#
-#     table_footer = """
-#         </table>
-#     """
-#
-#     table_body = ""
-#     for i in range(sudoku.shape[0]):
-#         table_body += "<tr>"
-#         for j in range(sudoku.shape[1]):
-#             if comparison is not None:
-#                 cell_color = "" if sudoku[i, j] == comparison[i, j] else "background-color:#F8BBD0;"
-#             else:
-#                 cell_color = ""
-#
-#             border_style = "border-bottom: 3px solid black;" if (i + 1) % 3 == 0 else ""
-#             border_style += "border-right: 3px solid black;" if (j + 1) % 3 == 0 else ""
-#             str_num = str(sudoku[i, j]) if sudoku[i, j] != 0 else " "
-#
-#             if mode == "fix":
-#                 table_body += f"<td style='{cell_color} {border_style}'>" + str_num + "</td>"
-#             else:
-#                 table_body += (
-#                     f"<td style='{cell_color} {border_style}'>"
-#                     f"<input type='text' id='cell-{i}-{j}' maxlength='1'></td>"
-#                 )
-#
-#         table_body += "</tr>"
-#     html = "<center>" + table_header + table_body + table_footer + "</center>"
-#     return html
+def generate_editable_sudoku_html(sudoku: np.ndarray) -> str:
+    """
+    Generate an editable HTML representation of a sudoku puzzle with background colors and disabled cells.
 
+    :param sudoku: sudoku puzzle
+    :return: HTML string
+    """
 
-# def generate_sudoku_html_v1(sudoku: np.ndarray, comparison: np.ndarray = None, mode: str = "edit") -> str:
-#     """
-#     Generate the HTML representation of a sudoku puzzle with editable cells.
-#     When the user presses Enter, the updated cell value and coordinates are sent.
-#
-#     :param sudoku: Sudoku puzzle
-#     :param comparison: Comparison for the Sudoku puzzle
-#     :param mode: Mode of the table (edit or fix)
-#     :return: HTML string
-#     """
-#
-#     table_header = """
-#         <style>
-#             table {
-#                 border-collapse: collapse;
-#                 font-family: Calibri, sans-serif;
-#             }
-#             tbody {
-#                 border: solid medium;
-#             }
-#             td {
-#                 border: solid thin;
-#                 height: 2em;
-#                 width: 2em;
-#                 text-align: center;
-#                 padding: 0;
-#             }
-#             input {
-#                 width: 100%;
-#                 height: 100%;
-#                 border: none;
-#                 text-align: center;
-#                 font-size: 16px;
-#                 font-family: Calibri, sans-serif;
-#             }
-#         </style>
-#         <table id="sudoku-table">
-#             <col><col><col>
-#             <col><col><col>
-#             <col><col><col>
-#     """
-#
-#     table_footer = """
-#         </table>
-#         <script>
-#             // Function to send updated cell value and coordinates to Streamlit
-#             function sendUpdate(row, col, value) {
-#                 const updateData = JSON.stringify({row: row, col: col, value: value});
-#                 parent.postMessage(updateData, "*");
-#             }
-#
-#             // Add event listeners to all editable cells
-#             document.addEventListener("DOMContentLoaded", () => {
-#                 const inputs = document.querySelectorAll("table#sudoku-table input");
-#                 inputs.forEach(input => {
-#                     input.addEventListener("keypress", (event) => {
-#                         if (event.key === "Enter") {
-#                             const idParts = input.id.split("-");
-#                             const row = parseInt(idParts[1]);
-#                             const col = parseInt(idParts[2]);
-#                             const value = input.value === "" ? 0 : parseInt(input.value);
-#                             sendUpdate(row, col, value);
-#                             event.preventDefault(); // Prevent form submission or default behavior
-#                         }
-#                     });
-#                 });
-#             });
-#         </script>
-#     """
-#
-#     table_body = ""
-#     for i in range(sudoku.shape[0]):
-#         table_body += "<tr>"
-#         for j in range(sudoku.shape[1]):
-#             if comparison is not None:
-#                 cell_color = "" if sudoku[i, j] == comparison[i, j] else "background-color:#F8BBD0;"
-#             else:
-#                 cell_color = ""
-#
-#             border_style = "border-bottom: 3px solid black;" if (i + 1) % 3 == 0 else ""
-#             border_style += "border-right: 3px solid black;" if (j + 1) % 3 == 0 else ""
-#             str_num = str(sudoku[i, j]) if sudoku[i, j] != 0 else " "
-#
-#             if mode == "fix":
-#                 table_body += f"<td style='{cell_color} {border_style}'>" + str_num + "</td>"
-#             else:
-#                 table_body += (
-#                     f"<td style='{cell_color} {border_style}'>"
-#                     f"<input type='text' id='cell-{i}-{j}' maxlength='1'></td>"
-#                 )
-#
-#         table_body += "</tr>"
-#     html = "<center>" + table_header + table_body + table_footer + "</center>"
-#     return html
+    style = """
+    <style>
+        .sudoku-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1em;
+        }
+        .sudoku-table {
+            border-collapse: collapse;
+            font-family: Calibri, sans-serif;
+        }
+        .sudoku-table tbody {
+            border: solid 3px black;
+        }
+        .sudoku-table td {
+            border: solid 1px black;
+            height: 2em;
+            width: 2em;
+            padding: 0;
+        }
+        .sudoku-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            font-size: 1.2em;
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        .sudoku-input:focus:not([disabled]) {
+            outline: none;
+            background-color: #e8f0fe !important;
+        }
+        .sudoku-input:disabled {
+            color: black;
+            background-color: inherit;
+        }
+        #output-area {
+            width: 30%;
+            height: 50px;
+            font-family: Calibri, sans-serif;
+            white-space: pre;
+            margin-top: 1em;
+        }
+    </style>
+    """
+
+    script = """
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.getElementsByClassName('sudoku-input');
+            const outputArea = document.getElementById('output-area');
+            let storedValues = {};
+
+            function formatJSON(obj) {
+                return JSON.stringify(obj, null, 1);
+            }
+
+            function updateOutput() {
+                const formattedJson = formatJSON(storedValues);
+                outputArea.value = formattedJson;
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    value: formattedJson
+                }, '*');
+            }
+
+            function moveFocus(input, direction) {
+                let row = parseInt(input.getAttribute('data-row'));
+                let col = parseInt(input.getAttribute('data-col'));
+
+                switch(direction) {
+                    case 'up':
+                        row = (row - 1 + 9) % 9;
+                        break;
+                    case 'down':
+                        row = (row + 1) % 9;
+                        break;
+                    case 'left':
+                        col = (col - 1 + 9) % 9;
+                        break;
+                    case 'right':
+                        col = (col + 1) % 9;
+                        break;
+                }
+
+                let nextInput = document.querySelector(
+                    `[data-row="${row}"][data-col="${col}"]`
+                );
+                if (nextInput) {
+                    nextInput.focus();
+                    nextInput.setSelectionRange(nextInput.value.length, nextInput.value.length);
+                }
+            }
+
+            for (let input of inputs) {
+                // Store initial values
+                const row = input.getAttribute('data-row');
+                const col = input.getAttribute('data-col');
+                if (input.value) {
+                    storedValues[`${row},${col}`] = input.value;
+                }
+
+                input.addEventListener('focus', function(e) {
+                    if (!this.disabled) {
+                        this.setSelectionRange(this.value.length, this.value.length);
+                    }
+                });
+
+                input.addEventListener('click', function(e) {
+                    if (!this.disabled) {
+                        this.setSelectionRange(this.value.length, this.value.length);
+                    }
+                });
+
+                input.addEventListener('input', function(e) {
+                    if (!this.disabled) {
+                        let value = this.value.replace(/[^1-9]/g, '');
+                        if (value.length > 1) value = value[0];
+                        this.value = value;
+
+                        const row = this.getAttribute('data-row');
+                        const col = this.getAttribute('data-col');
+                        if (value) {
+                            storedValues[`${row},${col}`] = value;
+                        } else {
+                            delete storedValues[`${row},${col}`];
+                        }
+
+                        updateOutput();
+                    }
+                });
+
+                input.addEventListener('keydown', function(e) {
+                    switch(e.key) {
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            moveFocus(this, 'up');
+                            break;
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            moveFocus(this, 'down');
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            moveFocus(this, 'left');
+                            break;
+                        case 'ArrowRight':
+                        case 'Enter':
+                            e.preventDefault();
+                            moveFocus(this, 'right');
+                            break;
+                    }
+                });
+            }
+
+            // Initial output update
+            updateOutput();
+        });
+        </script>
+        """
+
+    if st.session_state.solutions and st.session_state.highlight_correct:
+        hint1, hint2 = get_hint_masks(sudoku=st.session_state.sudoku, solutions=st.session_state.solutions)
+    else:
+        hint1 = np.zeros((9, 9), dtype=bool)
+        hint2 = np.zeros((9, 9), dtype=bool)
+
+    table = "<table class='sudoku-table'>"
+    for i in range(9):
+        table += "<tr>"
+        for j in range(9):
+
+            border_style = []
+            if (i + 1) % 3 == 0 and i < 8:
+                border_style.append("border-bottom: 3px solid black")
+            if (j + 1) % 3 == 0 and j < 8:
+                border_style.append("border-right: 3px solid black")
+
+            cell_color = get_background_color(hint1, hint2, i, j)
+            print(cell_color)
+            disabled_attr = "disabled" if (st.session_state.freeze_config and
+                                           st.session_state.sudoku_frz[i, j]) else ""
+            cell_style = border_style + [f"background-color: {cell_color}"] if cell_color else border_style
+            cell_style = "; ".join(cell_style)
+
+            value = str(sudoku[i, j]) if sudoku[i, j] != 0 else ""
+
+            table += f"""
+                <td style="{cell_style}">
+                    <input 
+                        type="text" 
+                        class="sudoku-input"
+                        value="{value}"
+                        data-row="{i}"
+                        data-col="{j}"
+                        maxlength="1"
+                        pattern="[1-9]"
+                        style="background-color: {cell_color if cell_color else 'inherit'}"
+                        {disabled_attr}
+                    >
+                </td>
+            """
+        table += "</tr>"
+    table += "</table>"
+
+    return f"""
+        <div class="sudoku-container">
+            {style}
+            {table}
+            <textarea id="output-area" placeholder="Grid values will appear here"></textarea>
+            {script}
+        </div>
+    """
 
 
 def get_background_color(hint1: np.ndarray, hint2: np.ndarray, row: int, col: int) -> str:
@@ -363,6 +421,15 @@ def is_full(sudoku: np.ndarray) -> bool:
     """
 
     return not np.any(sudoku == 0)
+
+
+def import_sudoku():
+    """
+    Import the generated sudoku puzzle into the solver section.
+    """
+
+    clear()
+    set_session_value(key="sudoku", value=st.session_state.sudoku_gen)
 
 
 def list_possible_numbers(sudoku: np.ndarray, row: int, col: int, hide_invalid: bool) -> list:
