@@ -51,7 +51,22 @@ def check_valid_sudoku(sudoku: np.ndarray) -> bool:
     return True
 
 
-def clear() -> None:
+def clear_folder(path: str) -> None:
+    """
+    Clear all the visible files in the given folder.
+
+    :param path: path to the folder
+    :return: None
+    """
+
+    for file_name in os.listdir(path):
+        if not file_name.startswith('.'):
+            file_path = os.path.join(path, file_name)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+
+
+def clear_sudoku() -> None:
     """
     Clear the sudoku puzzle and its solutions.
 
@@ -432,7 +447,7 @@ def import_sudoku():
     Import the generated sudoku puzzle into the solver section.
     """
 
-    clear()
+    clear_sudoku()
     set_session_value(key="sudoku", value=st.session_state.sudoku_gen)
 
 

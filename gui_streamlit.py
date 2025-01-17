@@ -32,7 +32,7 @@ def handle_file_upload(column) -> None:
     """
     Handle the upload of a sudoku puzzle from a text file through the file uploader.
 
-    :param column: column to display the result
+    :param column: column to monitor the process
     :return: None
     """
 
@@ -42,24 +42,21 @@ def handle_file_upload(column) -> None:
             with stylable_container(
                 key="upload",
                 css_styles="""
-                .stAlert{
-                    text-align: center
-                }
+                    .stAlert{
+                        text-align: center
+                    }
                 """
             ):
                 try:
-                    cwd = os.getcwd()
-                    file_path = os.path.join(cwd, "src/Tmp/sudoku_tmp.txt")
+                    file_path = os.path.join(os.getcwd(), "src\\Tmp\\sudoku-tmp.txt")
                     with open(file_path, "wb") as f:
                         f.write(file.getbuffer())
 
                     sudoku = load_sudoku_board(file_path=file_path)
                     if sudoku is not None:
-                        set_session_value(key="solutions", value=[])
                         set_session_value(key="sudoku", value=sudoku)
-                        # set_session_value(key="freeze_config", value=True)
-                        set_freeze_mask()
-                        st.success("File loaded correctly.")
+                        set_session_value(key="solutions", value=[])
+                        st.success("File loaded.")
                     else:
                         st.error("File is malformed.")
                 except:
@@ -70,122 +67,43 @@ def check_solution(column) -> None:
     """
     Check if the current sudoku puzzle is a completed and the solution is valid.
 
-    :param column: column to display the result
+    :param column: column to monitor the process
     :return: boolean
     """
 
     sudoku = st.session_state.sudoku
     with column:
         with stylable_container(
-                key="check",
-                css_styles="""
+            key="check",
+            css_styles="""
                 .stAlert{
                     text-align: center
-                }"""
+                }
+            """
         ):
             if is_full(sudoku):
-                st.success("The sudoku is complete and valid.") if check_valid_sudoku(sudoku) else(
-                    st.error("The sudoku is invalid."))
+                st.success("Sudoku is complete and valid.") if check_valid_sudoku(sudoku) else(
+                    st.error("Sudoku is not valid."))
             else:
-                st.warning("The sudoku is incomplete.")
-
-
-@st.dialog("Input number")
-def input_number(row: int, col: int) -> None:
-    """
-    Dialog widget to input a number in the selected position of the sudoku puzzle.
-
-    :param row: row index of the printed table
-    :param col: column index of the printed table
-    :return: None
-    """
-
-    cols = st.columns(9)
-    for i in range(1, 10):
-        with cols[i-1]:
-            if i in list_possible_numbers(
-                sudoku=st.session_state.sudoku,
-                row=row,
-                col=map_board_column(col),
-                hide_invalid=st.session_state.hide_invalid
-            ):
-                if st.button(label=str(i)):
-                    st.session_state.sudoku[row, map_board_column(col)] = i
-                    st.rerun()
-
-    if st.session_state.sudoku[row, map_board_column(col)]:
-        if st.button(label="Clear"):
-            st.session_state.sudoku[row, map_board_column(col)] = 0
-            st.rerun()
-
-
-# def print_sudoku_block(block_idx: int, n_rows: int=3) -> None:
-#     """
-#     Generate and display a block of the sudoku puzzle.
-#     The first 2 blocks are closed with a white space to simulate the separation between blocks.
-#
-#     :param block_idx: block index
-#     :param n_rows: number of rows to display
-#     :return: None
-#     """
-#
-#     _, c, _ = st.columns((5, 10, 5))
-#     grid = c.columns((7, 7, 7, 3.5, 7, 7, 7, 3.5, 7, 7, 7, 1))
-#
-#     if st.session_state.solutions and st.session_state.highlight_correct:
-#         hint1, hint2 = get_hint_masks(sudoku=st.session_state.sudoku, solutions=st.session_state.solutions)
-#     else:
-#         hint1 = np.zeros((9, 9), dtype=bool)
-#         hint2 = np.zeros((9, 9), dtype=bool)
-#
-#     for row in range(3*block_idx, 3*block_idx+n_rows):
-#         for col in range(11):
-#             with grid[col]:
-#                 if col in (3, 7):
-#                     continue
-#
-#                 map_col = map_board_column(col)
-#                 num = st.session_state.sudoku[row, map_col]
-#                 text = str(num) if num != 0 else "_"
-#
-#                 background_color = get_background_color(hint1, hint2, row, map_col)
-#                 margin_top = "0rem" if row%3 == 0 else "-1rem"
-#                 margin_bottom = "0rem" if (row-2)%3 == 0 else "-1rem"
-#
-#                 with stylable_container(
-#                     key=f"sudoku_{row}{col}",
-#                     css_styles=f"""
-#                         button {{
-#                             font-size: 1rem;
-#                             font-weight: bold;
-#                             background-color: {background_color};
-#                             color: black;
-#                             margin-top: {margin_top};
-#                             margin-bottom: {margin_bottom};
-#                         }}
-#                     """
-#                 ):
-#                     st.button(
-#                         key=f"sudoku_{row}{col}",
-#                         label=text,
-#                         disabled=st.session_state.freeze_config and st.session_state.sudoku_frz[row, map_board_column(col)],
-#                         on_click=input_number,
-#                         args=(row, col)
-#                     )
+                st.warning("Sudoku is incomplete.")
 
 
 def solve_sudoku(column) -> None:
     """
     Solve the current sudoku puzzle using the backtracking algorithm.
-    To do so, save the puzzle to a text file, call the solver, and load back the solutions.
 
-    :param column: column to display the process
+    :param column: column to monitor the process
     :return: None
     """
 
+    cwd = os.getcwd()
+    solutions_path = os.path.join(cwd, "src\\Solutions")
+    tmp_path = os.path.join(cwd, "src\\Tmp")
+
+    clear_folder(folder_path=solutions_path)
     set_session_value(key="solutions", value=[])
     set_session_value(key="hints", value=[])
-    empty_folder("src/Solutions")
+
     if is_full(st.session_state.sudoku):
         return None
 
@@ -193,28 +111,29 @@ def solve_sudoku(column) -> None:
         with st.spinner("Solving..."):
             save_sudoku_puzzle(
                 sudoku=st.session_state.sudoku,
-                file_path="src/Tmp/sudoku_tmp.txt"
+                file_path=os.path.join(tmp_path, "sudoku-tmp.txt")
             )
             execution = call_exe(
-                file_name="run_backtrack.exe",
-                input_file="src/Tmp/sudoku_tmp.txt"
+                file_name=os.path.join(cwd, "run_backtrack.exe"),
+                input=[os.path.join(tmp_path, "sudoku-tmp.txt"), solutions_path, tmp_path],
             )
 
         with stylable_container(
-                key="solve",
-                css_styles="""
+            key="solve",
+            css_styles="""
                 .stAlert{
                     text-align: center
-                }"""
+                }
+            """
         ):
             if execution:
-                solutions = load_solutions(path="src/Solutions")
-                hints = load_hints(path="src/Tmp/solver_actions.log")
+                solutions = load_solutions(folder_path=solutions_path)
+                hints = load_hints(folder_path=os.path.join(tmp_path, "solver-actions.log"))
                 if solutions:
                     set_session_value(key="solutions", value=solutions)
                     set_session_value(key="hints", value=hints)
                     set_session_value(key="sol_idx", value=0)
-                    st.success("Solution(s) loaded successfully.")
+                    st.success("Solution(s) loaded.")
                 else:
                     st.error("Could not solve the sudoku.")
 
@@ -223,33 +142,38 @@ def generate_sudoku(column) -> None:
     """
     Generate a sudoku puzzle with the desired level of difficulty.
 
-    :param column: column to display the process
+    :param column: column to monitor the process
     :return: None
     """
 
+    cwd = os.getcwd()
+    seeds_path = os.path.join(cwd, "src\\Seeds")
+    tmp_path = os.path.join(cwd, "src\\Tmp")
+
     with column:
         with stylable_container(
-                key="generate",
-                css_styles="""
-                        .stAlert{
-                            text-align: center
-                        }"""
+            key="generate",
+            css_styles="""
+                .stAlert{
+                    text-align: center
+                }
+            """
         ):
-            if st.session_state.difficulty_level is None:
-                st.error("Please select a difficulty level.")
+            if st.session_state.sudoku_level is None:
+                st.error("Please select a level.")
                 return None
 
             with st.spinner("Generating..."):
                 execution = call_exe(
-                    file_name="run_generator.exe",
-                    input_file=str(st.session_state.difficulty_level),
+                    file_name=os.path.join(cwd, "run_generator.exe"),
+                    input=[str(st.session_state.sudoku_level), seeds_path, tmp_path],
                     timeout=15
                 )
 
             if execution:
-                sudoku_gen = load_sudoku_board(file_path="src/Tmp/sudoku_gen.txt")
+                sudoku_gen = load_sudoku_board(file_path=os.path.join("src\\Tmp\\sudoku-gen.txt"))
                 set_session_value(key="sudoku_gen", value=sudoku_gen)
-                st.success("Sudoku generated successfully.")
+                st.success("Sudoku generated.")
 
 
 ### ---------------------------------------------------------------------------------------------------- ###
@@ -312,41 +236,39 @@ with cols[0]:
         label="Clear",
         help="Clear the whole sudoku grid",
         use_container_width=True,
-        on_click=clear
+        on_click=clear_sudoku
     )
 with cols[1]:
     st.checkbox(
         key="freeze_config",
-        label="Freeze current configuration",
+        label="Freeze configuration",
         value=st.session_state.freeze_config,
         on_change=set_freeze_mask,
     )
 
-# for block_idx in range(3):
-#     print_sudoku_block(block_idx=block_idx)
-
 cols = st.columns([3, 2])
 with cols[0]:
-    grid_html = generate_editable_sudoku_html(st.session_state.sudoku)
+    grid_html = generate_editable_sudoku_html(sudoku=st.session_state.sudoku)
     st.components.v1.html(grid_html, height=400)
 
 with cols[1]:
     st.markdown("")
     with st.expander("Confirm grid values", expanded=True):
         tmp_values = st.text_area(
-            "Grid Values",
-            st.session_state.tmp_values,
-            height=100,
-            label_visibility="collapsed"
+            label="Confirm grid values",
+            label_visibility="collapsed",
+            value=st.session_state.tmp_values,
+            height=100
         )
+
         if st.button("Update"):
             with stylable_container(
-                    key="update",
-                    css_styles="""
-                            .stAlert{
-                                text-align: center
-                            }
-                            """
+                key="update",
+                css_styles="""
+                    .stAlert{
+                        text-align: center
+                    }
+                """
             ):
                 try:
                     if tmp_values:
@@ -354,14 +276,12 @@ with cols[1]:
                         for pos, value in updates.items():
                             row, col = map(int, pos.split(","))
                             st.session_state.sudoku[row, col] = int(value)
-                        st.success("Grid updated successfully!")
+                        st.success("Grid updated.")
                         st.rerun()
                     else:
                         st.warning("No values to update.")
                 except json.JSONDecodeError:
-                    st.error("Invalid grid values format.")
-                except Exception as e:
-                    st.error(f"Error updating the grid")
+                    st.error("Error during update.")
 
 cols = st.columns((1, 1, 7), vertical_alignment="center")
 with cols[0]:
@@ -424,8 +344,8 @@ if st.session_state.solutions:
                         args=("sol_idx", sol_idx+1)
                     )
 
-            st.html(generate_fix_sudoku_html(solutions[sol_idx], st.session_state.sudoku))
-            with open(f"src/Solutions/solution{sol_idx + 1}.txt") as file:
+            st.html(generate_fix_sudoku_html(sudoku=solutions[sol_idx], comparison=st.session_state.sudoku))
+            with open(os.path.join(os.getcwd(), "src\\Solutions\\solution{sol_idx + 1}.txt")) as file:
                 st.download_button(
                     label="Download",
                     data=file,
@@ -442,14 +362,14 @@ if st.session_state.solutions:
                     i. the number appears in the solution where most of the numbers are correct \\
                     ii. the number is correct \\
                 - white if the number is incorrect \\
-                If the changes are not visible, reload the page with the button on the right.
+                If the changes are not visible, try reloading the page.
             """,
             value=st.session_state.highlight_correct
         )
     with cols[2]:
         if st.button(
             label="Reload",
-            help="Reload the page to apply any changes",
+            help="Reload the page to apply changes",
             use_container_width=True,
         ):
             st.rerun()
@@ -511,7 +431,7 @@ cols = st.columns((2, 1.5, 7), vertical_alignment="bottom")
 col = st.columns((1))
 with cols[0]:
     st.number_input(
-        key="difficulty_level",
+        key="sudoku_level",
         label="Enter level",
         min_value=1,
         max_value=4,
@@ -536,7 +456,7 @@ if np.any(st.session_state.sudoku_gen):
             on_click=import_sudoku
         )
     with cols[1]:
-        with open(f"src/Tmp/sudoku_gen.txt") as file:
+        with open(f"src\\Tmp\\sudoku_gen.txt") as file:
             st.download_button(
                 label="Download",
                 data=file,

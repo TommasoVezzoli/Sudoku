@@ -195,7 +195,7 @@ static void initCandidates(Sudoku *sudoku) {
  * Returns:
  * - true if progress is made on the puzzle, false otherwise.
  */
-bool applyNakedSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
+bool applyNakedSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char *log_file) {
 
     for (int r = 0; r < N; r++) {
         for (int c = 0; c < N; c++) {
@@ -240,7 +240,7 @@ bool applyNakedSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
  * Returns:
  * - true if progress is made on the puzzle, false otherwise.
  */
-bool applyHiddenSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
+bool applyHiddenSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char *log_file) {
 
     // Check rows for hidden singles
     for (int r = 0; r < N; r++) {
@@ -370,7 +370,7 @@ bool isNakedPair(unsigned short mask1, unsigned short mask2) {
  * Returns:
  * - true if progress is made on the puzzle, false otherwise.
  */
-bool applyNakedPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
+bool applyNakedPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char *log_file) {
 
     bool progress = false;
 
@@ -602,7 +602,7 @@ bool isUniqueToPair(int d, int unitCells[9][2], int pairCells[2][2], int unitSiz
  * Returns:
  * - true if progress is made on the puzzle, false otherwise.
  */
-bool applyHiddenPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
+bool applyHiddenPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char *log_file) {
 
     bool progress = false;
 
@@ -703,7 +703,7 @@ bool applyHiddenPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
  * Returns:
  * - true if progress is made on the puzzle, false otherwise.
  */
-bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
+bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char *log_file) {
 
     bool progress = false;
 
@@ -964,7 +964,7 @@ bool isNakedTriple(unsigned short mask1, unsigned short mask2, unsigned short ma
  * Returns:
  * - true if progress is made on the puzzle, false otherwise.
  */
-bool applyNakedTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
+bool applyNakedTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char *log_file) {
     bool progress = false;
 
     // Check rows for Naked Triples
@@ -1189,7 +1189,7 @@ void removeOtherCandidatesForTriple(unsigned short *cellMask, unsigned short tri
  * Returns:
  * - true if progress is made on the puzzle, false otherwise.
  */
-bool applyHiddenTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
+bool applyHiddenTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char *log_file) {
 
     bool progress = false;
 
@@ -1302,7 +1302,7 @@ bool applyHiddenTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
  * Returns:
  * - true if progress is made on the puzzle, false otherwise.
  */
-bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
+bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char *log_file) {
 
     bool progress = false;
 
@@ -1707,10 +1707,12 @@ bool validateSudoku(Sudoku *sudoku) {
  * Returns:
  * - true if the puzzle is solved, false otherwise.
  */
-bool solve_human(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
+bool solve_human(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char *output_path) {
 
     // Clear the log file at the beginning of the function
-    FILE *logFile = fopen("src/Tmp/solver_actions.log", "w");
+    char log_file[256];
+    sprintf(log_file, "%s\\solver_actions.log", output_path);
+    FILE *logFile = fopen(log_file, "w");
     if (logFile == NULL) {
         // printf("Error opening log file for clearing.\n");
         return false; // Exit if the log file cannot be opened
@@ -1721,49 +1723,49 @@ bool solve_human(Sudoku *sudoku, SolverStats *stats, bool solving_mode) {
     bool progress;
     do {
         progress = false;
-        if (applyNakedSingle(sudoku, stats, solving_mode)) {
+        if (applyNakedSingle(sudoku, stats, solving_mode, log_file)) {
             if (!validateSudoku(sudoku)) {
                 // printf("Error: Invalid state after applying Naked Single.\n");
                 return false;
             }
             progress = true;
-        } else if (applyHiddenSingle(sudoku, stats, solving_mode)) {
+        } else if (applyHiddenSingle(sudoku, stats, solving_mode, log_file)) {
             if (!validateSudoku(sudoku)) {
                 // printf("Error: Invalid state after applying Hidden Single.\n");
                 return false;
             }
             progress = true;
-        } else if (applyPointingPair(sudoku,stats, solving_mode)) {
+        } else if (applyPointingPair(sudoku,stats, solving_mode, log_file)) {
             if (!validateSudoku(sudoku)) {
                 // printf("Error: Invalid state after applying Pointing Pair.\n");
                 return false;
             }
             progress = true;
-        } else if (applyNakedPair(sudoku, stats, solving_mode)) {
+        } else if (applyNakedPair(sudoku, stats, solving_mode, log_file)) {
             if (!validateSudoku(sudoku)) {
                 // printf("Error: Invalid state after applying Naked Pair.\n");
                 return false;
             }
             progress = true;
-        } else if (applyHiddenPair(sudoku, stats, solving_mode)) {
+        } else if (applyHiddenPair(sudoku, stats, solving_mode, log_file)) {
             if (!validateSudoku(sudoku)) {
                 // printf("Error: Invalid state after applying Hidden Pair.\n");
                 return false;
             }
             progress = true;
-        } else if (applyPointingTriples(sudoku,stats, solving_mode)) {
+        } else if (applyPointingTriples(sudoku,stats, solving_mode, log_file)) {
             if (!validateSudoku(sudoku)) {
                 // printf("Error: Invalid state after applying Pointing Triple.\n");
                 return false;
             }
             progress = true;
-        } else if (applyNakedTriple(sudoku, stats, solving_mode)) {
+        } else if (applyNakedTriple(sudoku, stats, solving_mode, log_file)) {
             if (!validateSudoku(sudoku)) {
                 // printf("Error: Invalid state after applying Naked Triple.\n");
                 return false;
             }
             progress = true;
-        } else if (applyHiddenTriple(sudoku, stats, solving_mode)){
+        } else if (applyHiddenTriple(sudoku, stats, solving_mode, log_file)){
             if (!validateSudoku(sudoku)) {
                 // printf("Error: Invalid state after applying Hidden Triple.\n");
                 return false;
@@ -1834,7 +1836,7 @@ void print_stats(SolverStats *stats) {
 
 //     Sudoku sudoku;
 //     SolverStats stats = {0};
-//     bool solving_mode = false;
+//     bool solving_mode, char *log_file = false;
 //     parse_file(&sudoku, argv[1]);
 //     printf("Initial Sudoku:\n");
 //     print_table(&sudoku);
