@@ -113,7 +113,7 @@ def solve_sudoku(column) -> None:
                 file_path=os.path.join(tmp_path, "sudoku-tmp.txt")
             )
             execution = call_exe(
-                file_name=os.path.join(cwd, "run_backtrack.exe"),
+                file_name=os.path.join(cwd, "run_backtrack"),
                 input=[str(os.path.join(tmp_path, "sudoku-tmp.txt")), str(solutions_path), str(tmp_path)],
             )
 
@@ -164,7 +164,7 @@ def generate_sudoku(column) -> None:
 
             with st.spinner("Generating..."):
                 execution = call_exe(
-                    file_name=os.path.join(cwd, "run_generator.exe"),
+                    file_name=os.path.join(cwd, "run_generator"),
                     input=[str(st.session_state.sudoku_level), str(seeds_path), str(tmp_path)],
                     timeout=15
                 )

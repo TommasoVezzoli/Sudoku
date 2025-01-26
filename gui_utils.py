@@ -16,9 +16,14 @@ def call_exe(file_name: str, input: list, timeout: int=60, retries=5) -> bool:
     :return:
     """
 
+    # Get base name without extension
+    base_name = file_name.rsplit('.', 1)[0] if '.exe' in file_name else file_name
+
+    # Use appropriate executable name based on platform
     system = platform.system().lower()
-    command = [file_name] if system == "windows" else ["wine64", file_name]
-    command.extend(input)
+    exe_name = f"{base_name}.exe" if system == 'windows' else base_name
+
+    command = [exe_name] + input
 
     for attempt in range(retries):
         try:
