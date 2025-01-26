@@ -30,10 +30,10 @@ def call_exe(file_name: str, input: list, timeout: int=60, retries=5) -> bool:
             if attempt == retries - 1:
                 return False
             continue
-        except FileNotFoundError as e:
-            if system != "windows" and "wine64" in str(e):
-                # print("Wine is not installed: run 'sudo apt-get install wine64'")
-                return False
+        # except FileNotFoundError as e:
+        #     if system != "windows" and "wine64" in str(e):
+        #         # print("Wine is not installed: run 'sudo apt-get install wine64'")
+        #         return False
 
 def check_valid_sudoku(sudoku: np.ndarray) -> bool:
     """
