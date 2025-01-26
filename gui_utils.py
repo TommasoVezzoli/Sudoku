@@ -1,5 +1,3 @@
-from platform import system
-
 import  numpy as np
 import  os
 import  platform
