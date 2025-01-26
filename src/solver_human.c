@@ -8,6 +8,12 @@
 
 #define N 9
 
+#ifdef _WIN32
+    #define PATH_SEPARATOR "\\"
+#else
+    #define PATH_SEPARATOR "/"
+#endif
+
 // ---------------------------------------------------------------------------------------------------- //
 // --- HELPER FUNCTIONS --- //
 
@@ -1711,7 +1717,7 @@ bool solve_human(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char *ou
 
     // Clear the log file at the beginning of the function
     char log_file[256];
-    sprintf(log_file, "%s\\solver-actions.log", output_path);
+    sprintf(log_file, "%s" PATH_SEPARATOR "solver-actions.log", output_path);
     FILE *logFile = fopen(log_file, "w");
     if (logFile == NULL) {
         // printf("Error opening log file for clearing.\n");

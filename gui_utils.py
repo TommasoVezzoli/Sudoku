@@ -4,7 +4,7 @@ import  streamlit as st
 import  subprocess
 
 
-def call_exe(file_name: str, input: str, timeout: int=60, retries=5) -> bool:
+def call_exe(file_name: str, input: list, timeout: int=60, retries=5) -> bool:
     """
     Call an executable receiving arguments or input files.
 

@@ -97,8 +97,8 @@ def solve_sudoku(column) -> None:
     """
 
     cwd = os.getcwd()
-    solutions_path = os.path.join(cwd, "src\\Solutions")
-    tmp_path = os.path.join(cwd, "src\\Tmp")
+    solutions_path = os.path.join(cwd, "src", "Solutions")
+    tmp_path = os.path.join(cwd, "src", "Tmp")
 
     clear_folder(path=solutions_path)
     set_session_value(key="solutions", value=[])
@@ -146,8 +146,8 @@ def generate_sudoku(column) -> None:
     """
 
     cwd = os.getcwd()
-    seeds_path = os.path.join(cwd, "src\\Seeds")
-    tmp_path = os.path.join(cwd, "src\\Tmp")
+    seeds_path = os.path.join(cwd, "src", "Seeds")
+    tmp_path = os.path.join(cwd, "src", "Tmp")
 
     with column:
         with stylable_container(
@@ -170,7 +170,7 @@ def generate_sudoku(column) -> None:
                 )
 
             if execution:
-                sudoku_gen = load_sudoku_board(file_path=os.path.join("src\\Tmp\\sudoku-gen.txt"))
+                sudoku_gen = load_sudoku_board(file_path=os.path.join("src", "Tmp", "sudoku-gen.txt"))
                 set_session_value(key="sudoku_gen", value=sudoku_gen)
                 st.success("Sudoku generated.")
 
@@ -344,7 +344,7 @@ if st.session_state.solutions:
                     )
 
             st.html(generate_fix_sudoku_html(sudoku=solutions[sol_idx], comparison=st.session_state.sudoku))
-            with open(os.path.join(os.getcwd(), f"src\\Solutions\\solution{sol_idx + 1}.txt")) as file:
+            with open(os.path.join(os.getcwd(), "src", "Solutions", f"solution{sol_idx + 1}.txt")) as file:
                 st.download_button(
                     label="Download",
                     data=file,
@@ -455,7 +455,7 @@ if np.any(st.session_state.sudoku_gen):
             on_click=import_sudoku
         )
     with cols[1]:
-        with open(os.path.join(os.getcwd(), f"src\\Tmp\\sudoku-gen.txt")) as file:
+        with open(os.path.join(os.getcwd(), "src", "Tmp", "sudoku-gen.txt")) as file:
             st.download_button(
                 label="Download",
                 data=file,

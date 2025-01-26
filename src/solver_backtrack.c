@@ -8,6 +8,11 @@
 
 #define N_SOL 5
 
+#ifdef _WIN32
+    #define PATH_SEPARATOR "\\"
+#else
+    #define PATH_SEPARATOR "/"
+#endif
 
 // ---------------------------------------------------------------------------------------------------- //
 // --- SOLVER --- //
@@ -37,7 +42,8 @@ bool solve_sudoku(
     if (!find_empty(sudoku, &row, &col)) {
         (*n_solutions)++;
         char filename[256];
-        snprintf(filename, sizeof(filename), "%s\\solution%d.txt", output_path, *n_solutions);
+
+        snprintf(filename, sizeof(filename), "%s" PATH_SEPARATOR "solution%d.txt", output_path, *n_solutions);
         write_to_file(sudoku, filename);
         
         if (*n_solutions == N_SOL) {
