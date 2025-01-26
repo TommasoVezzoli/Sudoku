@@ -59,6 +59,10 @@ def clear_folder(path: str) -> None:
     :return: None
     """
 
+    # Check if the path exists
+    if not os.path.exists(path):
+        return
+
     for file_name in os.listdir(path):
         if not file_name.startswith('.'):
             file_path = os.path.join(path, file_name)
