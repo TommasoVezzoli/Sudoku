@@ -4,12 +4,12 @@ import  streamlit as st
 import  subprocess
 
 
-def call_exe(file_name: str, input_file: str, timeout: int=60, retries=5) -> bool:
+def call_exe(file_name: str, input: str, timeout: int=60, retries=5) -> bool:
     """
-    Call an executable receiving an input file.
+    Call an executable receiving arguments or input files.
 
     :param file_name: name of the executable
-    :param input_file: path to the input file
+    :param input: arguments
     :param timeout: time limit
     :param retries: number of retries
     :return:
@@ -17,7 +17,7 @@ def call_exe(file_name: str, input_file: str, timeout: int=60, retries=5) -> boo
 
     for attempt in range(retries):
         try:
-            run_process = subprocess.run([file_name, input_file], capture_output=True, text=True, timeout=timeout)
+            run_process = subprocess.run([file_name]+input, capture_output=True, text=True, timeout=timeout)
             return run_process.returncode == 0
         except subprocess.TimeoutExpired:
             if attempt == retries - 1:
@@ -51,7 +51,22 @@ def check_valid_sudoku(sudoku: np.ndarray) -> bool:
     return True
 
 
-def clear() -> None:
+def clear_folder(path: str) -> None:
+    """
+    Clear all the visible files in the given folder.
+
+    :param path: path to the folder
+    :return: None
+    """
+
+    for file_name in os.listdir(path):
+        if not file_name.startswith('.'):
+            file_path = os.path.join(path, file_name)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+
+
+def clear_sudoku() -> None:
     """
     Clear the sudoku puzzle and its solutions.
 
@@ -432,7 +447,7 @@ def import_sudoku():
     Import the generated sudoku puzzle into the solver section.
     """
 
-    clear()
+    clear_sudoku()
     set_session_value(key="sudoku", value=st.session_state.sudoku_gen)
 
 
@@ -498,8 +513,9 @@ def load_solutions(path: str) -> list:
 
     solutions = []
     for file_name in os.listdir(path):
-        file_path = os.path.join(path, file_name)
-        solutions.append(load_sudoku_board(file_path=file_path))
+        if not file_name.startswith('.'):
+            file_path = os.path.join(path, file_name)
+            solutions.append(load_sudoku_board(file_path=file_path))
 
     return solutions
 

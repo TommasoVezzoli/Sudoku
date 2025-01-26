@@ -26,9 +26,9 @@ bool find_empty(
     int *row,
     int *col
 ) {
-    for (int r = 0; r < N; r++) {
-        for (int c = 0; c < N; c++) {
-            if (sudoku->table[r][c] == 0) {
+    for(int r = 0; r < N; r++) {
+        for(int c = 0; c < N; c++) {
+            if(sudoku->table[r][c] == 0) {
                 *row = r;
                 *col = c;
                 return true;
@@ -62,16 +62,16 @@ bool is_valid(
 ) {
 
     // Check row and col
-    for (int i = 0; i < N; i++) {
-        if ((sudoku->table[row][i] == guess) || (sudoku->table[i][col] == guess)) {
+    for(int i = 0; i < N; i++) {
+        if((sudoku->table[row][i] == guess) || (sudoku->table[i][col] == guess)) {
             return false;
         }
     }
 
     // Check the 3x3 box
-    for (int r = 0; r < 3; r++) {
-        for (int c = 0; c < 3; c++) {
-            if (sudoku->table[(row/3)*3 + r][(col/3)*3 + c] == guess) {
+    for(int r = 0; r < 3; r++) {
+        for(int c = 0; c < 3; c++) {
+            if(sudoku->table[(row/3)*3 + r][(col/3)*3 + c] == guess) {
                 return false;
             }
         }
@@ -79,9 +79,3 @@ bool is_valid(
 
     return true;
 }
-
-
-// ---------------------------------------------------------------------------------------------------- //
-// --- HUMAN LOGIC FUNCTIONS --- //
-
-

@@ -34,7 +34,7 @@ typedef struct {
 } SolverStats;
 
 
-bool solve_human(Sudoku *sudoku, SolverStats *stats, bool solving_mode);
+bool solve_human(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char *output_path);
 
 void print_stats(SolverStats *stats);
 

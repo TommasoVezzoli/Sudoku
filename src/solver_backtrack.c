@@ -28,7 +28,8 @@
  */
 bool solve_sudoku(
     Sudoku *sudoku,
-    int *n_solutions
+    int *n_solutions,
+    char *output_path
 ) {
     int row, col;
 
@@ -36,7 +37,7 @@ bool solve_sudoku(
     if (!find_empty(sudoku, &row, &col)) {
         (*n_solutions)++;
         char filename[256];
-        snprintf(filename, sizeof(filename), "src/Solutions/solution%d.txt", *n_solutions);
+        snprintf(filename, sizeof(filename), "%s\\solution%d.txt", output_path, *n_solutions);
         write_to_file(sudoku, filename);
         
         if (*n_solutions == N_SOL) {
@@ -44,11 +45,10 @@ bool solve_sudoku(
         }
         return false;
     }
-
     for (int guess = 1; guess <= 9; guess++) {
         if (is_valid(sudoku, guess, row, col)) {
             sudoku->table[row][col] = guess;
-            if (solve_sudoku(sudoku, n_solutions)) {
+            if (solve_sudoku(sudoku, n_solutions, output_path)) {
                 if (*n_solutions == N_SOL) {
                     return true;
                 }
@@ -57,7 +57,6 @@ bool solve_sudoku(
             sudoku->table[row][col] = 0;
         }
     }
-
     return false;
 }
 
@@ -77,33 +76,32 @@ bool solve_sudoku(
  * - Attempts to solve it.
  * - Print the number of solutions found (it can be at most N_SOL).
  */
-int main(int argc, char *argv[]) {
+int main(
+    int argc,
+    char *argv[]
+) {
 
-    if (argc != 2) {
-        printf("Usage: %s <input_file>\n", argv[0]);
+    if (argc != 4) {
+        printf("Usage: %s <input_file> <output_path> <log_path>\n", argv[0]);
         return 1;
     }
-
     Sudoku sudoku;
     parse_file(&sudoku, argv[1]);
-    // print_table(&sudoku);
 
     Sudoku sudoku_copy;
     memcpy(&sudoku_copy, &sudoku, sizeof(Sudoku));
     SolverStats stats_copy = {0};
-    solve_human(&sudoku_copy, &stats_copy, true);
+    solve_human(&sudoku_copy, &stats_copy, true, argv[3]);
 
     for (int row = 0; row < N; row++) {
         for (int col = 0; col < N; col++) {
             int num = sudoku.table[row][col];
             if (num != 0) {
                 sudoku.table[row][col] = 0;
-
-                // Validate the input
                 if (!is_valid(&sudoku, num, row, col)) {
                     sudoku.table[row][col] = num;
                     printf("Invalid Sudoku\n");
-//                    write_to_file(&sudoku, "sudoku_solution.txt");
+                    // write_to_file(&sudoku, "sudoku_solution.txt");
                     return 0;
                 }
                 sudoku.table[row][col] = num;
@@ -111,11 +109,8 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Clean the previous solutions, solve the Sudoku, and print the solutions found
-    // printf("Max number of solution set to: %d\n", N_SOL);
     int n_solutions = 0;
-    solve_sudoku(&sudoku, &n_solutions);
-    // printf("Found %d solutions\n", n_solutions);
-
+    solve_sudoku(&sudoku, &n_solutions, argv[2]);
+    // printf("Found %d solutions out of %d\n", n_solutions, N_SOL);
     return 0;
 }
