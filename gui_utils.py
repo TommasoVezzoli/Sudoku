@@ -1,5 +1,8 @@
+from platform import system
+
 import  numpy as np
 import  os
+import  platform
 import  streamlit as st
 import  subprocess
 
@@ -15,15 +18,22 @@ def call_exe(file_name: str, input: list, timeout: int=60, retries=5) -> bool:
     :return:
     """
 
+    system = platform.system().lower()
+    command = [file_name] if system == "windows" else ["wine64", file_name]
+    command.extend(input)
+
     for attempt in range(retries):
         try:
-            run_process = subprocess.run([file_name]+input, capture_output=True, text=True, timeout=timeout)
+            run_process = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
             return run_process.returncode == 0
         except subprocess.TimeoutExpired:
             if attempt == retries - 1:
                 return False
             continue
-
+        except FileNotFoundError as e:
+            if system != "windows" and "wine64" in str(e):
+                # print("Wine is not installed: run 'sudo apt-get install wine64'")
+                return False
 
 def check_valid_sudoku(sudoku: np.ndarray) -> bool:
     """

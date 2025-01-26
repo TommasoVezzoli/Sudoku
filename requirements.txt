@@ -1,3 +1,5 @@
 numpy
+platform
 streamlit
 streamlit-extras
+subprocess
