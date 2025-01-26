@@ -100,13 +100,12 @@ def solve_sudoku(column) -> None:
     solutions_path = os.path.join(cwd, "src\\Solutions")
     tmp_path = os.path.join(cwd, "src\\Tmp")
 
-    clear_folder(folder_path=solutions_path)
+    clear_folder(path=solutions_path)
     set_session_value(key="solutions", value=[])
     set_session_value(key="hints", value=[])
 
     if is_full(st.session_state.sudoku):
         return None
-
     with column:
         with st.spinner("Solving..."):
             save_sudoku_puzzle(
@@ -115,7 +114,7 @@ def solve_sudoku(column) -> None:
             )
             execution = call_exe(
                 file_name=os.path.join(cwd, "run_backtrack.exe"),
-                input=[os.path.join(tmp_path, "sudoku-tmp.txt"), solutions_path, tmp_path],
+                input=[str(os.path.join(tmp_path, "sudoku-tmp.txt")), str(solutions_path), str(tmp_path)],
             )
 
         with stylable_container(
@@ -127,8 +126,8 @@ def solve_sudoku(column) -> None:
             """
         ):
             if execution:
-                solutions = load_solutions(folder_path=solutions_path)
-                hints = load_hints(folder_path=os.path.join(tmp_path, "solver-actions.log"))
+                solutions = load_solutions(path=solutions_path)
+                hints = load_hints(path=os.path.join(tmp_path, "solver-actions.log"))
                 if solutions:
                     set_session_value(key="solutions", value=solutions)
                     set_session_value(key="hints", value=hints)
@@ -166,7 +165,7 @@ def generate_sudoku(column) -> None:
             with st.spinner("Generating..."):
                 execution = call_exe(
                     file_name=os.path.join(cwd, "run_generator.exe"),
-                    input=[str(st.session_state.sudoku_level), seeds_path, tmp_path],
+                    input=[str(st.session_state.sudoku_level), str(seeds_path), str(tmp_path)],
                     timeout=15
                 )
 
@@ -345,7 +344,7 @@ if st.session_state.solutions:
                     )
 
             st.html(generate_fix_sudoku_html(sudoku=solutions[sol_idx], comparison=st.session_state.sudoku))
-            with open(os.path.join(os.getcwd(), "src\\Solutions\\solution{sol_idx + 1}.txt")) as file:
+            with open(os.path.join(os.getcwd(), f"src\\Solutions\\solution{sol_idx + 1}.txt")) as file:
                 st.download_button(
                     label="Download",
                     data=file,
@@ -456,7 +455,7 @@ if np.any(st.session_state.sudoku_gen):
             on_click=import_sudoku
         )
     with cols[1]:
-        with open(f"src\\Tmp\\sudoku_gen.txt") as file:
+        with open(os.path.join(os.getcwd(), f"src\\Tmp\\sudoku-gen.txt")) as file:
             st.download_button(
                 label="Download",
                 data=file,

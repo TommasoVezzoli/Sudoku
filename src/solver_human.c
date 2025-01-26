@@ -207,7 +207,7 @@ bool applyNakedSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode, cha
                             setCell(sudoku, r, c, d);
                             stats->naked_single++;
                             if (solving_mode) {
-                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                FILE *logFile = fopen(log_file, "a");
                                 if (logFile == NULL) {
                                     printf("Error opening log file.\n");
                                     return false; // Exit if the log file cannot be opened
@@ -256,7 +256,7 @@ bool applyHiddenSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode, ch
                 setCell(sudoku, r, col, d);
                 stats->hidden_single++;
                 if (solving_mode) {
-                    FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                    FILE *logFile = fopen(log_file, "a");
                     if (logFile == NULL) {
                         printf("Error opening log file.\n");
                         return false; // Exit if the log file cannot be opened
@@ -283,7 +283,7 @@ bool applyHiddenSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode, ch
                 setCell(sudoku, row, c, d);
                 stats->hidden_single++;
                 if (solving_mode) {
-                    FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                    FILE *logFile = fopen(log_file, "a");
                     if (logFile == NULL) {
                         printf("Error opening log file.\n");
                         return false; // Exit if the log file cannot be opened
@@ -317,7 +317,7 @@ bool applyHiddenSingle(Sudoku *sudoku, SolverStats *stats, bool solving_mode, ch
                     setCell(sudoku, row, col, d);
                     stats->hidden_single++;
                     if (solving_mode) {
-                        FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                        FILE *logFile = fopen(log_file, "a");
                         if (logFile == NULL) {
                             printf("Error opening log file.\n");
                             return false; // Exit if the log file cannot be opened
@@ -386,7 +386,7 @@ bool applyNakedPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char 
                             if (c3 != c1 && c3 != c2 && sudoku->table[r][c3] == 0) {
                                 if (candidates[r][c3] & pairMask) {
                                     if (solving_mode) {
-                                        FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                        FILE *logFile = fopen(log_file, "a");
                                         if (logFile == NULL) {
                                             printf("Error opening log file.\n");
                                             return false; // Exit if the log file cannot be opened
@@ -403,7 +403,7 @@ bool applyNakedPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char 
                         }
                         if (progress) {
                             if (solving_mode) {
-                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                FILE *logFile = fopen(log_file, "a");
                                 fprintf(logFile,"\n");
                                 fclose(logFile);
                             }
@@ -428,7 +428,7 @@ bool applyNakedPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char 
                             if (r3 != r1 && r3 != r2 && sudoku->table[r3][c] == 0) {
                                 if (candidates[r3][c] & pairMask) {
                                     if (solving_mode) {
-                                        FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                        FILE *logFile = fopen(log_file, "a");
                                         if (logFile == NULL) {
                                             printf("Error opening log file.\n");
                                             return false; // Exit if the log file cannot be opened
@@ -445,7 +445,7 @@ bool applyNakedPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char 
                         }
                         if (progress) {
                             if (solving_mode) {
-                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                FILE *logFile = fopen(log_file, "a");
                                 fprintf(logFile,"\n");
                                 fclose(logFile);
                             }
@@ -489,7 +489,7 @@ bool applyNakedPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char 
                                 int r = cells[k][0], c = cells[k][1];
                                 if (candidates[r][c] & pairMask) {
                                     if (solving_mode) {
-                                        FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                        FILE *logFile = fopen(log_file, "a");
                                         if (logFile == NULL) {
                                             printf("Error opening log file.\n");
                                             return false; // Exit if the log file cannot be opened
@@ -506,7 +506,7 @@ bool applyNakedPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char 
                         }
                         if (progress) {
                             if (solving_mode) {
-                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                FILE *logFile = fopen(log_file, "a");
                                 fprintf(logFile,"\n");
                                 fclose(logFile);
                             }
@@ -665,7 +665,7 @@ bool applyHiddenPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char
                         removeOtherCandidates(&candidates[r2][c2], pairMask);
 
                         if (solving_mode) {
-                            FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                            FILE *logFile = fopen(log_file, "a");
                             if (logFile == NULL) {
                                 printf("Error opening log file.\n");
                                 return false; // Exit if the log file cannot be opened
@@ -759,7 +759,7 @@ bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, ch
                                             candidates[r][cc] &= ~digitMask(d);
                                             progress = true;
                                             if (solving_mode) {
-                                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                                FILE *logFile = fopen(log_file, "a");
                                                 if (logFile == NULL) {
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
@@ -772,7 +772,7 @@ bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, ch
                                 }
                                 if (progress) {
                                     if (solving_mode) {
-                                        FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                        FILE *logFile = fopen(log_file, "a");
                                         fprintf(logFile,"\n");
                                         fclose(logFile);
                                     }
@@ -798,7 +798,7 @@ bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, ch
                                             candidates[innerR][innerC] &= ~digitMask(d);
                                             progress = true;
                                             if (solving_mode) {
-                                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                                FILE *logFile = fopen(log_file, "a");
                                                 if (logFile == NULL) {
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
@@ -811,7 +811,7 @@ bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, ch
                                 }
                                 if (progress) {
                                     if (solving_mode) {
-                                        FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                        FILE *logFile = fopen(log_file, "a");
                                         fprintf(logFile,"\n");
                                         fclose(logFile);
                                     }
@@ -856,7 +856,7 @@ bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, ch
                                             candidates[rr][c] &= ~digitMask(d);
                                             progress = true;
                                             if (solving_mode) {
-                                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                                FILE *logFile = fopen(log_file, "a");
                                                 if (logFile == NULL) {
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
@@ -868,7 +868,7 @@ bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, ch
                                     }
                                 }
                                 if (progress) {
-                                    FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                    FILE *logFile = fopen(log_file, "a");
                                     fprintf(logFile,"\n");
                                     fclose(logFile);
                                     stats->pointing_pair++;
@@ -893,7 +893,7 @@ bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, ch
                                             candidates[innerR][innerC] &= ~digitMask(d);
                                             progress = true;
                                             if (solving_mode) {
-                                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                                FILE *logFile = fopen(log_file, "a");
                                                 if (logFile == NULL) {
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
@@ -906,7 +906,7 @@ bool applyPointingPair(Sudoku *sudoku, SolverStats *stats, bool solving_mode, ch
                                 }
                                 if (progress) {
                                     if (solving_mode) {
-                                        FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                        FILE *logFile = fopen(log_file, "a");
                                         fprintf(logFile,"\n");
                                         fclose(logFile);
                                     }
@@ -982,7 +982,7 @@ bool applyNakedTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode, cha
                                         if (c != c1 && c != c2 && c != c3 && sudoku->table[r][c] == 0) {
                                             if (candidates[r][c] & tripleMask) {
                                                 if (solving_mode) {
-                                                    FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                                    FILE *logFile = fopen(log_file, "a");
                                                     if (logFile == NULL) {
                                                         printf("Error opening log file.\n");
                                                         return false; // Exit if the log file cannot be opened
@@ -1000,7 +1000,7 @@ bool applyNakedTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode, cha
                                     }
                                     if (progress){
                                         if (solving_mode) {
-                                            FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                            FILE *logFile = fopen(log_file, "a");
                                             fprintf(logFile,"\n");
                                             fclose(logFile);
                                         }
@@ -1031,7 +1031,7 @@ bool applyNakedTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode, cha
                                         if (r != r1 && r != r2 && r != r3 && sudoku->table[r][c] == 0) {
                                             if (candidates[r][c] & tripleMask) {
                                                 if (solving_mode) {
-                                                    FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                                    FILE *logFile = fopen(log_file, "a");
                                                     if (logFile == NULL) {
                                                         printf("Error opening log file.\n");
                                                         return false; // Exit if the log file cannot be opened
@@ -1049,7 +1049,7 @@ bool applyNakedTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode, cha
                                     }
                                     if (progress){
                                         if (solving_mode) {
-                                            FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                            FILE *logFile = fopen(log_file, "a");
                                             fprintf(logFile,"\n");
                                             fclose(logFile);
                                         }
@@ -1098,7 +1098,7 @@ bool applyNakedTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode, cha
                                     int r = cells[m][0], c = cells[m][1];
                                     if (candidates[r][c] & tripleMask) {
                                         if (solving_mode) {
-                                            FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                            FILE *logFile = fopen(log_file, "a");
                                             if (logFile == NULL) {
                                                 printf("Error opening log file.\n");
                                                 return false; // Exit if the log file cannot be opened
@@ -1117,7 +1117,7 @@ bool applyNakedTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode, cha
                             }
                             if (progress){
                                 if (solving_mode) {
-                                    FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                    FILE *logFile = fopen(log_file, "a");
                                     fprintf(logFile,"\n");
                                     fclose(logFile);
                                 }
@@ -1264,7 +1264,7 @@ bool applyHiddenTriple(Sudoku *sudoku, SolverStats *stats, bool solving_mode, ch
 
                             if (progress) {
                                 if (solving_mode) {
-                                    FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                    FILE *logFile = fopen(log_file, "a");
                                     if (logFile == NULL) {
                                         printf("Error opening log file.\n");
                                         return false; // Exit if the log file cannot be opened
@@ -1393,7 +1393,7 @@ bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode,
                                             candidates[r][cc] &= ~digitMask(d);
                                             progress = true;
                                             if (solving_mode) {
-                                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                                FILE *logFile = fopen(log_file, "a");
                                                 if (logFile == NULL) {
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
@@ -1405,7 +1405,7 @@ bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode,
                                     }
                                 } 
                                 if (progress) {
-                                    FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                    FILE *logFile = fopen(log_file, "a");
                                     fprintf(logFile,"\n");
                                     fclose(logFile);
                                     stats->pointing_triple++;
@@ -1418,7 +1418,7 @@ bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode,
                                             candidates[rr][c] &= ~digitMask(d);
                                             progress = true;
                                             if (solving_mode) {
-                                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                                FILE *logFile = fopen(log_file, "a");
                                                 if (logFile == NULL) {
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
@@ -1430,7 +1430,7 @@ bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode,
                                     }
                                 }
                                 if (progress) {
-                                    FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                    FILE *logFile = fopen(log_file, "a");
                                     fprintf(logFile,"\n");
                                     fclose(logFile);
                                     stats->pointing_triple++;
@@ -1470,7 +1470,7 @@ bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode,
                                             candidates[innerR][innerC] &= ~digitMask(d);
                                             progress = true;
                                             if (solving_mode) {
-                                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                                FILE *logFile = fopen(log_file, "a");
                                                 if (logFile == NULL) {
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
@@ -1484,7 +1484,7 @@ bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode,
                                             candidates[innerR][innerC] &= ~digitMask(d);
                                             progress = true;
                                             if (solving_mode) {
-                                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                                FILE *logFile = fopen(log_file, "a");
                                                 if (logFile == NULL) {
                                                     printf("Error opening log file.\n");
                                                     return false; // Exit if the log file cannot be opened
@@ -1497,7 +1497,7 @@ bool applyPointingTriples(Sudoku *sudoku, SolverStats *stats, bool solving_mode,
                                 }
                             }
                             if (progress) {
-                                FILE *logFile = fopen("src/Tmp/solver_actions.log", "a");
+                                FILE *logFile = fopen(log_file, "a");
                                 fprintf(logFile,"\n");
                                 fclose(logFile);
                                 stats->pointing_triple++;
@@ -1711,7 +1711,7 @@ bool solve_human(Sudoku *sudoku, SolverStats *stats, bool solving_mode, char *ou
 
     // Clear the log file at the beginning of the function
     char log_file[256];
-    sprintf(log_file, "%s\\solver_actions.log", output_path);
+    sprintf(log_file, "%s\\solver-actions.log", output_path);
     FILE *logFile = fopen(log_file, "w");
     if (logFile == NULL) {
         // printf("Error opening log file for clearing.\n");
