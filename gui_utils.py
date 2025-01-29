@@ -17,7 +17,8 @@ def call_exe(file_name: str, input: list, timeout: int=60, retries=5) -> bool:
     """
 
     system = platform.system().lower()
-    command = ["wine64", file_name] if system != "windows" else file_name
+    file_name = file_name.rsplit('.', 1)[0] if '.exe' in file_name else file_name
+    command = ["wine64", file_name] if system != "windows" else [file_name]
     command.extend(input)
 
     for attempt in range(retries):

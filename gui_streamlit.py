@@ -82,8 +82,10 @@ def check_solution(column) -> None:
             """
         ):
             if is_full(sudoku):
-                st.success("Sudoku is complete and valid.") if check_valid_sudoku(sudoku) else(
-                    st.error("Sudoku is not valid."))
+                if check_valid_sudoku(sudoku):
+                    st.success("Sudoku is complete and valid.")
+                else:
+                    st.error("Sudoku is not valid.")
             else:
                 st.warning("Sudoku is incomplete.")
 
