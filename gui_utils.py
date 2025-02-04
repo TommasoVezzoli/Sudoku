@@ -29,10 +29,9 @@ def call_exe(file_name: str, input: list, timeout: int=60, retries=5) -> bool:
             if attempt == retries - 1:
                 return False
             continue
-        # except FileNotFoundError as e:
-        #     if system != "windows" and "wine64" in str(e):
-        #         # print("Wine is not installed: run 'sudo apt-get install wine64'")
-        #         return False
+        except Exception:
+            return False
+
 
 def check_valid_sudoku(sudoku: np.ndarray) -> bool:
     """
@@ -87,6 +86,7 @@ def clear_sudoku() -> None:
     """
 
     set_session_value(key="sudoku", value=np.zeros((9, 9), dtype=int))
+    set_session_value(key="sudoku_frz", value=np.zeros((9, 9), dtype=bool))
     set_session_value(key="freeze_config", value=False)
     set_session_value(key="solutions", value=[])
     set_session_value(key="hints", value=[])
@@ -105,7 +105,8 @@ def empty_folder(path: str) -> None:
         if os.path.isfile(file_path):
             os.remove(file_path)
 
-def generate_fix_sudoku_html(sudoku: np.ndarray, comparison :np.ndarray=None) -> None:
+
+def generate_sudoku_html(sudoku: np.ndarray, comparison :np.ndarray=None) -> None:
     """
     Generate a html representation of a sudoku puzzle.
     If a comparison is provided, the cells are colored according to whether the value is the same or differs.
@@ -119,17 +120,18 @@ def generate_fix_sudoku_html(sudoku: np.ndarray, comparison :np.ndarray=None) ->
         <style>
             table {
                 border-collapse: collapse;
-                font-family: Calibri, sans-serif;
+                font-family: Arial, sans-serif;
             }
-            tbody {
-                border: solid medium;
-            }
+            # tbody {
+            #     border: solid medium;
+            # }
             td {
                 border: solid thin;
-                height: 1.4em;
-                width: 1.4em;
+                font-size: 1em;
                 text-align: center;
                 padding: 0;
+                height: 24px;
+                width: 26px;
             }
         </style>
         <table>
@@ -151,8 +153,11 @@ def generate_fix_sudoku_html(sudoku: np.ndarray, comparison :np.ndarray=None) ->
             else:
                 cell_color = ""
 
-            border_style = "border-bottom: 3px solid black;" if (i + 1) % 3 == 0 else ""
-            border_style += "border-right: 3px solid black;" if (j + 1) % 3 == 0 else ""
+            border_style = ""
+            if (i + 1) % 3 == 0 and i < 8:
+                border_style += "border-bottom: 3px solid black;"
+            if (j + 1) % 3 == 0 and j < 8:
+                border_style += "border-right: 3px solid black;"
 
             str_num = str(sudoku[i, j]) if sudoku[i, j] != 0 else " "
             table_body += f"<td style='{cell_color} {border_style}'>" + str_num + "</td>"
@@ -162,255 +167,36 @@ def generate_fix_sudoku_html(sudoku: np.ndarray, comparison :np.ndarray=None) ->
     return html
 
 
-def generate_editable_sudoku_html(sudoku: np.ndarray) -> str:
+def get_background_color(hint1: np.ndarray, hint2: np.ndarray) -> list:
     """
-    Generate an editable HTML representation of a sudoku puzzle with background colors and disabled cells.
-
-    :param sudoku: sudoku puzzle
-    :return: HTML string
-    """
-
-    style = """
-    <style>
-        .sudoku-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1em;
-        }
-        .sudoku-table {
-            border-collapse: collapse;
-            font-family: Calibri, sans-serif;
-        }
-        .sudoku-table tbody {
-            border: solid 3px black;
-        }
-        .sudoku-table td {
-            border: solid 1px black;
-            height: 2em;
-            width: 2em;
-            padding: 0;
-        }
-        .sudoku-input {
-            width: 100%;
-            height: 100%;
-            border: none;
-            text-align: center;
-            font-family: Arial, sans-serif;
-            font-size: 1.2em;
-            padding: 0;
-            margin: 0;
-            box-sizing: border-box;
-        }
-        .sudoku-input:focus:not([disabled]) {
-            outline: none;
-            background-color: #e8f0fe !important;
-        }
-        .sudoku-input:disabled {
-            color: black;
-            background-color: inherit;
-        }
-        #output-area {
-            width: 30%;
-            height: 50px;
-            font-family: Calibri, sans-serif;
-            white-space: pre;
-            margin-top: 1em;
-        }
-    </style>
-    """
-
-    script = """
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const inputs = document.getElementsByClassName('sudoku-input');
-            const outputArea = document.getElementById('output-area');
-            let storedValues = {};
-
-            function formatJSON(obj) {
-                return JSON.stringify(obj, null, 1);
-            }
-
-            function updateOutput() {
-                const formattedJson = formatJSON(storedValues);
-                outputArea.value = formattedJson;
-                window.parent.postMessage({
-                    type: 'streamlit:setComponentValue',
-                    value: formattedJson
-                }, '*');
-            }
-
-            function moveFocus(input, direction) {
-                let row = parseInt(input.getAttribute('data-row'));
-                let col = parseInt(input.getAttribute('data-col'));
-
-                switch(direction) {
-                    case 'up':
-                        row = (row - 1 + 9) % 9;
-                        break;
-                    case 'down':
-                        row = (row + 1) % 9;
-                        break;
-                    case 'left':
-                        col = (col - 1 + 9) % 9;
-                        break;
-                    case 'right':
-                        col = (col + 1) % 9;
-                        break;
-                }
-
-                let nextInput = document.querySelector(
-                    `[data-row="${row}"][data-col="${col}"]`
-                );
-                if (nextInput) {
-                    nextInput.focus();
-                    nextInput.setSelectionRange(nextInput.value.length, nextInput.value.length);
-                }
-            }
-
-            for (let input of inputs) {
-                // Store initial values
-                const row = input.getAttribute('data-row');
-                const col = input.getAttribute('data-col');
-                if (input.value) {
-                    storedValues[`${row},${col}`] = input.value;
-                }
-
-                input.addEventListener('focus', function(e) {
-                    if (!this.disabled) {
-                        this.setSelectionRange(this.value.length, this.value.length);
-                    }
-                });
-
-                input.addEventListener('click', function(e) {
-                    if (!this.disabled) {
-                        this.setSelectionRange(this.value.length, this.value.length);
-                    }
-                });
-
-                input.addEventListener('input', function(e) {
-                    if (!this.disabled) {
-                        let value = this.value.replace(/[^1-9]/g, '');
-                        if (value.length > 1) value = value[0];
-                        this.value = value;
-
-                        const row = this.getAttribute('data-row');
-                        const col = this.getAttribute('data-col');
-                        if (value) {
-                            storedValues[`${row},${col}`] = value;
-                        } else {
-                            delete storedValues[`${row},${col}`];
-                        }
-
-                        updateOutput();
-                    }
-                });
-
-                input.addEventListener('keydown', function(e) {
-                    switch(e.key) {
-                        case 'ArrowUp':
-                            e.preventDefault();
-                            moveFocus(this, 'up');
-                            break;
-                        case 'ArrowDown':
-                            e.preventDefault();
-                            moveFocus(this, 'down');
-                            break;
-                        case 'ArrowLeft':
-                            e.preventDefault();
-                            moveFocus(this, 'left');
-                            break;
-                        case 'ArrowRight':
-                        case 'Enter':
-                            e.preventDefault();
-                            moveFocus(this, 'right');
-                            break;
-                    }
-                });
-            }
-
-            // Initial output update
-            updateOutput();
-        });
-        </script>
-        """
-
-    if st.session_state.solutions and st.session_state.highlight_correct:
-        hint1, hint2 = get_hint_masks(sudoku=st.session_state.sudoku, solutions=st.session_state.solutions)
-    else:
-        hint1 = np.zeros((9, 9), dtype=bool)
-        hint2 = np.zeros((9, 9), dtype=bool)
-
-    table = "<table class='sudoku-table'>"
-    for i in range(9):
-        table += "<tr>"
-        for j in range(9):
-
-            border_style = []
-            if (i + 1) % 3 == 0 and i < 8:
-                border_style.append("border-bottom: 3px solid black")
-            if (j + 1) % 3 == 0 and j < 8:
-                border_style.append("border-right: 3px solid black")
-
-            cell_color = get_background_color(hint1, hint2, i, j)
-            disabled_attr = "disabled" if (st.session_state.freeze_config and
-                                           st.session_state.sudoku_frz[i, j]) else ""
-            cell_style = border_style + [f"background-color: {cell_color}"] if cell_color else border_style
-            cell_style = "; ".join(cell_style)
-
-            value = str(sudoku[i, j]) if sudoku[i, j] != 0 else ""
-
-            table += f"""
-                <td style="{cell_style}">
-                    <input 
-                        type="text" 
-                        class="sudoku-input"
-                        value="{value}"
-                        data-row="{i}"
-                        data-col="{j}"
-                        maxlength="1"
-                        pattern="[1-9]"
-                        style="background-color: {cell_color if cell_color else 'inherit'}"
-                        {disabled_attr}
-                    >
-                </td>
-            """
-        table += "</tr>"
-    table += "</table>"
-
-    return f"""
-        <div class="sudoku-container">
-            {style}
-            {table}
-            <textarea id="output-area" placeholder="Grid values will appear here"></textarea>
-            {script}
-        </div>
-    """
-
-
-def get_background_color(hint1: np.ndarray, hint2: np.ndarray, row: int, col: int) -> str:
-    """
-    Get the background color of the cell in the sudoku grid.
+    Get the background color for each cell in the sudoku grid.
 
     :param hint1: first hint mask
     :param hint2: second hint mask
-    :param row: row index
-    :param col: column index
     :return: color
     """
 
-    if st.session_state.freeze_config and st.session_state.sudoku_frz[row, col]:
-        if hint1[row, col]:
-            return "#99dd99"
-        if hint2[row, col]:
-            return "#ffd700"
-        return "#f0f0f0"
+    colors = []
+    for i in range(9):
+        row_colors = []
+        for j in range(9):
+            if st.session_state.freeze_config and st.session_state.sudoku_frz[i, j]:
+                if hint1[i, j]:
+                    row_colors.append("#99dd99")
+                elif hint2[i, j]:
+                    row_colors.append("#ffd700")
+                else:
+                    row_colors.append("#f0f0f0")
+            else:
+                if hint1[i, j]:
+                    row_colors.append("#00ff00")
+                elif hint2[i, j]:
+                    row_colors.append("#ffff00")
+                else:
+                    row_colors.append("#ffffff")
+        colors.append(row_colors)
 
-    if hint1[row, col]:
-        return "#00ff00"
-    if hint2[row, col]:
-        return "#ffff00"
-    return "#ffffff"
+    return colors
 
 
 def get_hint_masks(sudoku: np.ndarray, solutions: list) -> tuple:
@@ -461,7 +247,7 @@ def import_sudoku():
     """
 
     clear_sudoku()
-    set_session_value(key="sudoku", value=st.session_state.sudoku_gen)
+    set_session_value(key="sudoku", value=st.session_state.sudoku_gen.copy())
 
 
 def list_possible_numbers(sudoku: np.ndarray, row: int, col: int, hide_invalid: bool) -> list:
@@ -494,25 +280,42 @@ def load_hints(path: str) -> list:
     Load the hints for the current sudoku from the folder to the session state.
 
     :param path: path to the folder
-    :return: tuple of hints
+    :return: list of hints
     """
 
-    hints = []
-    hint = ""
-    with open(path, "r") as f:
-        for line in f:
-            if line == "\n":
-                if hint.endswith("\n"):
-                    if hint.strip():
-                        hints.append(hint)
-                    hint = ""
-                else:
-                    hint += "\n" + line
+    with open(path, "r") as file:
+        content = file.read()
+
+    lines = [line.strip() for line in content.split('\n') if line.strip()]
+    formatted_hints = []
+    current_hint = []
+
+    for line in lines:
+        if not line:
+            continue
+
+        # Process a new hint and add bullet points if it extends to more than one line
+        if current_hint and not line.startswith(current_hint[0].split(':')[0]):
+            if len(current_hint) == 1:
+                formatted_hints.append(current_hint[0])
             else:
-                hint += "\n" + line
-        if hint:
-            hints.append(hint)
-    return hints
+                hint_type = current_hint[0].split(':')[0]
+                instructions = [f"* {line.split(':', 1)[1].strip()}" for line in current_hint]
+                formatted_hints.append(f"{hint_type}:\n" + "\n".join(instructions))
+            current_hint = []
+
+        current_hint.append(line)
+
+    # Process the last hint if it exists
+    if current_hint:
+        if len(current_hint) == 1:
+            formatted_hints.append(current_hint[0])
+        else:
+            hint_type = current_hint[0].split(':')[0]
+            instructions = [f"* {line.split(':', 1)[1].strip()}" for line in current_hint]
+            formatted_hints.append(f"{hint_type}:\n" + "\n".join(instructions))
+
+    return formatted_hints
 
 
 
@@ -561,17 +364,6 @@ def load_sudoku_board(file_path) -> np.ndarray:
             correct = False
 
     return sudoku if correct else None
-
-
-def map_board_column(col: int) -> int:
-    """
-    Map the column index from the table to the actual index in the sudoku puzzle.
-
-    :param col: column index of the printed table
-    :return: column index of the board
-    """
-
-    return col-(col//4)
 
 
 def save_sudoku_puzzle(sudoku: np.ndarray, file_path: str) -> None:

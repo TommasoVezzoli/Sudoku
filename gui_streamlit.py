@@ -1,6 +1,6 @@
-import  numpy as np
+from    custom_component import render_sudoku
 from    gui_utils import *
-import  json
+import  numpy as np
 import  os
 from    streamlit_extras.stylable_container import stylable_container
 import  streamlit as st
@@ -54,8 +54,8 @@ def handle_file_upload(column) -> None:
 
                     sudoku = load_sudoku_board(file_path=file_path)
                     if sudoku is not None:
+                        clear_sudoku()
                         set_session_value(key="sudoku", value=sudoku)
-                        set_session_value(key="solutions", value=[])
                         st.success("File loaded.")
                     else:
                         st.error("File is malformed.")
@@ -115,7 +115,7 @@ def solve_sudoku(column) -> None:
                 file_path=os.path.join(tmp_path, "sudoku-tmp.txt")
             )
             execution = call_exe(
-                file_name=os.path.join(cwd, "run_backtrack.exe.exe"),
+                file_name=os.path.join(cwd, "run_solver.exe.exe"),
                 input=[str(os.path.join(tmp_path, "sudoku-tmp.txt")), str(solutions_path), str(tmp_path)],
             )
 
@@ -188,8 +188,7 @@ st.markdown(
     This web page hosts a **Sudoku Solver** in the first part and a **Sudoku Generator** in the second.  
     You can find the source code at this github [repo](https://github.com/ggiuliopirotta/Sudoku).
     
-    P.S. We recommend setting the screen to light mode for better visibility.  
-    You can do that from the app settings in the top right corner.
+    P.S. Switch to light screen mode from the app setting for better visibility.
     """
 )
 
@@ -204,20 +203,15 @@ st.markdown(
     """
     ### Solver
     This tool is able to solve any sudoku puzzle, whether it holds a single solution or multiple ones: in such case just the five that are most similar to each other are loaded. \\
-    When the **Solve** button is pressed, a popup window with the solutions will appear.
+    Here is an example of what a user can do:
+    1. Upload a puzzle from a file formatted like [this](https://github.com/ggiuliopirotta/Sudoku/blob/main/sample-file.txt)
+    2. Freeze the non-empty cells of the grid to avoid messing up the current configuration
+    3. Attempt to solve the puzzle
+    4. Ask the computer to provide a solution to the puzzle
+    5. Follow the hints to solve it autonomously
+    6. Check if the grid is valid
     
-    Here is a recap of the main functionalities in this section:
-    - Upload a puzzle from a text file like [this](https://github.com/ggiuliopirotta/Sudoku/blob/main/sample-file.txt)
-    - Freeze the non-empty cells of the grid to avoid messing up the current configuration
-    - Check if the grid is valid
-    - Solve the sudoku
-    - Follow the hints that will guide you to the solution
-    
-    For the other features, read the tooltip hovering over with the mouse.
-    
-    ##### Important remark
-    When you want to fill in the Sudoku grid cells, after inputting the desired numbers, you need to manually copy the values in the text area below the grid and paste them into the text area on the right.  
-    Then, click the **Update** button.
+    For each non-trivial feature, a tooltip will provide further instructions.
     """
 )
 
@@ -247,42 +241,20 @@ with cols[1]:
         on_change=set_freeze_mask,
     )
 
-cols = st.columns([3, 2])
-with cols[0]:
-    grid_html = generate_editable_sudoku_html(sudoku=st.session_state.sudoku)
-    st.components.v1.html(grid_html, height=400)
+if st.session_state.solutions and st.session_state.highlight_correct:
+    hint1, hint2 = get_hint_masks(sudoku=st.session_state.sudoku, solutions=st.session_state.solutions)
+else:
+    hint1 = np.zeros((9, 9), dtype=bool)
+    hint2 = np.zeros((9, 9), dtype=bool)
 
-with cols[1]:
-    st.markdown("")
-    with st.expander("Confirm grid values", expanded=True):
-        tmp_values = st.text_area(
-            label="Confirm grid values",
-            label_visibility="collapsed",
-            value=st.session_state.tmp_values,
-            height=100
-        )
+colors = get_background_color(hint1=hint1, hint2=hint2)
 
-        if st.button("Update"):
-            with stylable_container(
-                key="update",
-                css_styles="""
-                    .stAlert{
-                        text-align: center
-                    }
-                """
-            ):
-                try:
-                    if tmp_values:
-                        updates = json.loads(tmp_values)
-                        for pos, value in updates.items():
-                            row, col = map(int, pos.split(","))
-                            st.session_state.sudoku[row, col] = int(value)
-                        st.success("Grid updated.")
-                        st.rerun()
-                    else:
-                        st.warning("No values to update.")
-                except json.JSONDecodeError:
-                    st.error("Error during update.")
+# Render the grid and process updates
+updated_cell = render_sudoku(st.session_state.sudoku, st.session_state.sudoku_frz, colors)
+if updated_cell:
+    row, col, value = updated_cell["row"], updated_cell["col"], updated_cell["value"]
+    st.session_state.sudoku[row, col] = value
+    st.rerun()
 
 cols = st.columns((1, 1, 7), vertical_alignment="center")
 with cols[0]:
@@ -325,7 +297,7 @@ if st.session_state.solutions:
                 solutions = st.session_state.solutions
                 sol_idx = st.session_state.sol_idx
 
-                popup_cols = st.columns((5, 2, 1, 2), vertical_alignment="center")
+                popup_cols = st.columns((6, 3, 1, 2), vertical_alignment="center")
                 with popup_cols[0]:
                     st.markdown(f"Solution {sol_idx+1} of {len(solutions)}")
                 with popup_cols[1]:
@@ -345,7 +317,7 @@ if st.session_state.solutions:
                         args=("sol_idx", sol_idx+1)
                     )
 
-            st.html(generate_fix_sudoku_html(sudoku=solutions[sol_idx], comparison=st.session_state.sudoku))
+            st.html(generate_sudoku_html(sudoku=solutions[sol_idx], comparison=st.session_state.sudoku))
             with open(os.path.join(os.getcwd(), "src", "Solutions", f"solution{sol_idx + 1}.txt")) as file:
                 st.download_button(
                     label="Download",
@@ -362,18 +334,10 @@ if st.session_state.solutions:
                 - green if any of these situations occur: \\
                     i. the number appears in the solution where most of the numbers are correct \\
                     ii. the number is correct \\
-                - white if the number is incorrect \\
-                If the changes are not visible, try reloading the page.
+                - white if the number is incorrect
             """,
             value=st.session_state.highlight_correct
         )
-    with cols[2]:
-        if st.button(
-            label="Reload",
-            help="Reload the page to apply changes",
-            use_container_width=True,
-        ):
-            st.rerun()
 
     if st.session_state.hints:
         with st.popover(
@@ -423,8 +387,9 @@ st.markdown(
     """
     ### Generator
     
-    This tool can generate sudoku of four different levels. \\
-    To use it, just insert the desired difficulty (from 1: easy, to 4: hard) and click the **Generate** button.
+    This tool can generate sudoku of four different levels.  
+    To use it, just insert the desired difficulty (from 1: easy, to 4: hard) and click the **Generate** button. \\
+    Differently from most of the online generators, this one does not have pre-loaded puzzles, thus yielding a much more varied output.
     """
 )
 
@@ -446,7 +411,7 @@ with cols[1]:
     )
 
 if np.any(st.session_state.sudoku_gen):
-    st.html(generate_fix_sudoku_html(st.session_state.sudoku_gen))
+    st.html(generate_sudoku_html(st.session_state.sudoku_gen))
 
     cols = st.columns((1, 1.5, 6))
     with cols[0]:
